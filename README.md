@@ -1,6 +1,6 @@
 # Discord bot for Cyber Republic
 
-## Using the app
+## Installing bot
 
 ### Create application and a bot
 Use https://discord.com/developers/applications
@@ -12,6 +12,9 @@ Use https://discord.com/developers/applications
 
 ### Clone repository
 git clone https://github.com/MButcho/discord-cr-bot
+
+### Install discord.js
+npm install discord.js
 
 ### Create config.json
 {
