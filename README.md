@@ -11,10 +11,14 @@ Use https://discord.com/developers/applications
 + Read Message History
 
 ### Clone repository
+```bash
 git clone https://github.com/MButcho/discord-cr-bot
+```
 
 ### Install discord.js
+```bash
 npm install discord.js
+```
 
 ### Create config.json in cloned folder
 ```json
@@ -24,5 +28,6 @@ npm install discord.js
 ```
 
 ### Start bot
-
+```bash
 node index.js
+```
