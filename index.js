@@ -2,7 +2,7 @@
 const { Client, Intents, MessageEmbed } = require('discord.js');
 const { token } = require('./config.json');
 var loop = false;
-const checkminutes = 0.1, checkthe_interval = checkminutes * 60 * 1000; //This checks every 10 minutes, change 10 to whatever minute you'd like
+const check_mins = 0.1, check_interval = check_mins * 60 * 1000; //This checks every 10 minutes, change 10 to whatever minute you'd like
 
 // Create a new client instance
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]});
@@ -23,7 +23,7 @@ client.on('messageCreate', (message) => {
     * Alternatively, use "#3498DB", [52, 152, 219] or an integer number.
     */
     .setColor(0x3498DB)
-    .setAuthor("Author Name, it can hold 256 characters", "https://i.imgur.com/lm8s41J.png")
+    .setAuthor({ name: 'Cyber Republic', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle("This is your title, it can hold 256 characters")
     .setURL("https://discord.js.org/#/docs/main/stable/class/MessageEmbed")
     .setDescription("This is the main body of text, it can hold 4096 characters.")
@@ -55,9 +55,9 @@ client.on('messageCreate', (message) => {
   if (loop === false) {
     loop = true;
     setInterval(function() {
-      message.channel.send("hello world");
+      //message.channel.send("hello world");
       //Or anything else
-    }, checkthe_interval);
+    }, check_interval);
   } else {
     //console.log('Loop already running');
   }
