@@ -16,7 +16,7 @@ git clone https://github.com/MButcho/discord-cr-bot
 ### Install discord.js
 npm install discord.js
 
-### Create config.json
+### Create config.json in cloned folder
 {
 	"token": "your_bot_token"
 }
