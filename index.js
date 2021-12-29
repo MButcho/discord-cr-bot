@@ -1,16 +1,17 @@
 // Require the necessary discord.js classes
 const { Client, Intents, MessageEmbed, TextChannel } = require('discord.js');
-const { token } = require('./config.json');
+const { token, ver } = require('./config.json');
 const request = require('request');
 const fetch = require('node-fetch');
 let loop = false;
-const check_mins = 10, check_interval = check_mins * 60 * 1000; //This checks every 10 minutes, change 10 to whatever minute you'd like
+let check_mins = 100;
+if (ver) check_mins = 1;
+let check_interval = check_mins * 60 * 1000;
 
 // Create a new client instance
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]});
-
-const channel_id = '920225673887494157'; // MB Test server #general
-//const channel_id = '917029748192985139'; // Elastos Discord #🌎┃cyber-republic-dao
+let channel_id = '917029748192985139'; // Elastos Discord #🌎┃cyber-republic-dao
+if (ver) channel_id = '920225673887494157'; // MB Test server #general
 
 // Basic variables
 const council = {
