@@ -4,7 +4,7 @@ const { token } = require('./config.json');
 const request = require('request');
 const fetch = require('node-fetch');
 let loop = false;
-const check_mins = 60, check_interval = check_mins * 60 * 1000; //This checks every 10 minutes, change 10 to whatever minute you'd like
+const check_mins = 1, check_interval = check_mins * 60 * 1000; //This checks every 10 minutes, change 10 to whatever minute you'd like
 
 // Create a new client instance
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]});
@@ -15,7 +15,7 @@ const channel_id = '917029748192985139'; // Elastos Discord #🌎┃cyber-republ
 // When the client is ready, run this code (only once)
 client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
-  //client.channels.cache.get(channel_id_test).send('I am up and running!');
+  client.channels.cache.get(channel_id).send('I am up and running!');
   //channel.send('Such language is prohibited!');
 });
 
