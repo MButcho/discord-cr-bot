@@ -15,7 +15,7 @@ const channel_id = '917029748192985139'; // Elastos Discord #🌎┃cyber-republ
 // When the client is ready, run this code (only once)
 client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
-  //client.channels.cache.get(channel_id).send('I am up and running!');
+  client.channels.cache.get(channel_id).send('I am up and running!');
   //channel.send('Such language is prohibited!');
 });
 
