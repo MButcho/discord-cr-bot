@@ -18,6 +18,8 @@ git clone https://github.com/MButcho/discord-cr-bot
 ### Install discord.js
 ```bash
 npm install discord.js
+npm install request
+npm install node-fetch
 ```
 
 ### Create config.json in cloned folder
