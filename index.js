@@ -113,7 +113,7 @@ client.on('messageCreate', async (message) => {
       }
     });
 
-    // ranks = ranks + `\n<b>Election close in ${blocksToGo} blocks</b>\n${days} days, ${hours} hours, ${minutes} minutes`;
+    //ranks = ranks + `\n<b>Election close in ${blocksToGo} blocks</b>\n${days} days, ${hours} hours, ${minutes} minutes`;
     //ranks = ranks + `\n<b>Election closed</b>\n${days} days, ${hours} hours, ${minutes} minutes`;
 
     //ranks = ranks + `\n \nOnce the election concludes, please use /council to view the official results.`;
@@ -126,7 +126,7 @@ client.on('messageCreate', async (message) => {
     .setTitle('Cyber Republic Council')
     .setURL('https://www.cyberrepublic.org/council')
     .addField('Election Status', ranks)
-    .addField('Election closed', `${days} days, ${hours} hours, ${minutes} minutes`);
+    .addField('Election Closed', `${days} days, ${hours} hours, ${minutes} minutes`);
     embed.setTimestamp();
     embed.setFooter(footer_text, footer_img);
     message.channel.send({ embeds: [embed] });
