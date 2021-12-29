@@ -4,7 +4,7 @@ const { token } = require('./config.json');
 const request = require('request');
 const fetch = require('node-fetch');
 let loop = false;
-const check_mins = 30, check_interval = check_mins * 60 * 1000; //This checks every 10 minutes, change 10 to whatever minute you'd like
+const check_mins = 100, check_interval = check_mins * 60 * 1000; //This checks every 10 minutes, change 10 to whatever minute you'd like
 
 // Create a new client instance
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]});
@@ -28,6 +28,8 @@ const council = {
   "5ee0d99f9e10fd007849e53e": "Orchard Trinity",
 };
 
+const footer_text = 'Support bot creator with ELA donation to EUSMsck3svNiacva9LfwrLfbvNnUU27z77';
+const footer_img = 'https://i.postimg.cc/Yq1g9cWv/avatar.png';
 
 // When the client is ready, run this code (only once)
 client.once('ready', () => {
@@ -69,7 +71,7 @@ client.on('messageCreate', async (message) => {
     .setURL('https://www.cyberrepublic.org/proposals/5fe404ea7b3b430078ea4866')
     .addField('Elastos Halving Countdown', `${days} days, ${hours} hours, ${minutes} minutes`)
     embed.setTimestamp();
-    embed.setFooter("Support bot creator with ELA donation to EUSMsck3svNiacva9LfwrLfbvNnUU27z77", "https://i.postimg.cc/Yq1g9cWv/avatar.png");
+    embed.setFooter(footer_text, footer_img);
     
     message.channel.send({ embeds: [embed] });
     //client.channels.cache.get(channel_id).send({ embeds: [embed] });
@@ -157,7 +159,7 @@ client.on('messageCreate', async (message) => {
     }
     
     embed.setTimestamp();
-    embed.setFooter("Support bot creator with ELA donation to EUSMsck3svNiacva9LfwrLfbvNnUU27z77", "https://i.postimg.cc/Yq1g9cWv/avatar.png");
+    embed.setFooter(footer_text, footer_img);
     
     message.channel.send({ embeds: [embed] });
   }
@@ -286,7 +288,7 @@ client.on('ready', () => {
           if (show_undecided) embed.addField("__Council members who have not yet voted__", undecidedList+'\u200b');
           if (show_failed) embed.addField("__Council members who failed to vote__", failedList+'\u200b');
           embed.setTimestamp();
-          embed.setFooter("Support bot creator with ELA donation to EUSMsck3svNiacva9LfwrLfbvNnUU27z77", "https://i.postimg.cc/Yq1g9cWv/avatar.png");
+          embed.setFooter(footer_text, footer_img);
           
           message.channel.send({ embeds: [embed] });
         });
@@ -299,7 +301,7 @@ client.on('ready', () => {
         .setURL('https://www.cyberrepublic.org/proposals')
         .addField("There is currently no active proposal", "\u200b")
         embed.setTimestamp();
-        embed.setFooter("Support bot creator with ELA donation to EUSMsck3svNiacva9LfwrLfbvNnUU27z77", "https://i.postimg.cc/Yq1g9cWv/avatar.png");
+        embed.setFooter(footer_text, footer_img);
         
         client.channels.cache.get(channel_id).send({ embeds: [embed] });
       }
