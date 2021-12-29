@@ -96,7 +96,7 @@ client.on('messageCreate', (message) => {
       const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
       const height = await block.json();
       
-      console.log('height.Result - ' + height.Result);
+      //console.log('height.Result - ' + height.Result);
       
       const active = proposalList.data.list.filter((item) => {
         //return item.proposedEndsHeight > height.Result && item.status === "PROPOSED";
@@ -105,7 +105,7 @@ client.on('messageCreate', (message) => {
       
       console.log('active.length - ' + active.length);
       
-      if (active.length > 0) {
+      if (active.length = 0) {
         active.forEach((item) => {
           let support = 0;
           let reject = 0;
@@ -127,73 +127,126 @@ client.on('messageCreate', (message) => {
             }
           });
 
-          let tally = `<u>Current voting status</u>\n&#9989;  Support - <b>${support}</b>\n&#10060;  Reject - <b>${reject}</b>\n&#128280;  Abstain - <b>${abstention}</b>\n&#9888;  Undecided - <b>${undecided}</b>\n\n`;
-          let unchainedList = `<u>Warnings</u>\n`;
+          //let tally = `<u>Current voting status</u>\n&#9989;  Support - <b>${support}</b>\n&#10060;  Reject - <b>${reject}</b>\n&#128280;  Abstain - <b>${abstention}</b>\n&#9888;  Undecided - <b>${undecided}</b>\n\n`;
+          let voting_status = `✅  Support - **${support}**\n❌  Reject - **${reject}**\n🔘  Abstain - **${abstention}**\n⚠  Undecided - **${undecided}**\n\u200b`;
+          
+          //let unchainedList = `<u>Warnings</u>\n`;
+          let unchainedList = '';
           if (unchained.length > 0) {
             unchained.forEach((warning) => {
               unchainedList += `${warning}\n`
             });
           }
-          let undecidedList = `<u>Council members who have not yet voted</u>\n`;
-          let failedList = `<u>Council members who failed to vote</u>\n`;
+          //let undecidedList = `<u>Council members who have not yet voted</u>\n`;
+          let undecidedList = '';
+          //let failedList = `<u>Council members who failed to vote</u>\n`;
+          let failedList = '';
           if (undecideds.length === 0) {
-            undecidedList = `<b>&#128526; Everyone voted! Well done!</b>\n`;
-            failedList = `<b>&#128526; Everyone voted! Well done!</b>\n`;
+            //undecidedList = `<b>&#128526; Everyone voted! Well done!</b>\n`;
+            undecidedList = '😎 Everyone voted! Well done!\n';
+            //failedList = `<b>&#128526; Everyone voted! Well done!</b>\n`;
+            failedList = '😎 Everyone voted! Well done!\n';
           } else {
             undecideds.forEach((member) => {
+              //undecidedList += `${council[member]}\n`;
               undecidedList += `${council[member]}\n`;
-              failedList += `${council[member]} &#9785\n`;
+              //failedList += `${council[member]} &#9785\n`;
+              failedList += `${council[member]} ☹\n`;
             });
           }
 
           let _message = "";
-          /*const embed = new MessageEmbed()
-          .setColor(0x5BFFD0)
-          .setAuthor({ name: 'Cyber Republic', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })*/
-
+          let description = "";
+          let show_unchained = false;
+          let show_undecided = false;
+          let show_failed = false;
+          
           const blocksRemaining = item.proposedEndsHeight - height.Result;
-          console.log("Blocks remaining: " + blocksRemaining);
+          //console.log("Blocks remaining: " + blocksRemaining);
 
           if (blocksRemaining > 4990) {
             if (storedAlerts[item._id] === 7) return;
-            _message = `<strong>&#10055; Whoa! A new proposal is now open for voting! &#128064;</strong>\n\n${item.title}\n\n`;
+            //_message = `<strong>&#10055; Whoa! A new proposal is now open for voting! &#128064;</strong>\n\n${item.title}\n\n`;
+            description = '❇️ Whoa! A new proposal is now open for voting! 👀';
             storedAlerts[item._id] = 7;
           } else if (blocksRemaining < 3600 && blocksRemaining > 3550) {
             if (storedAlerts[item._id] === 5) return;
-            _message = `<strong>&#128076; Reminder! There are <u>5 days</u> remaining to vote on proposal:</strong>\n\n${item.title}\n\n`;
+            //_message = `<strong>&#128076; Reminder! There are <u>5 days</u> remaining to vote on proposal:</strong>\n\n${item.title}\n\n`;
+            description = '👌 Reminder! There are *5 days* remaining to vote on proposal';
             storedAlerts[item._id] = 5;
           } else if (blocksRemaining < 2160 && blocksRemaining > 2110) {
             if (storedAlerts[item._id] === 3) return;
-            _message = `<strong>&#128073; Hey you! &#128072; There are <u>3 days</u> remaining to vote on proposal:</strong>\n\n${item.title}\n\n${tally}`;
-            if (unchained.length > 0) _message += `${unchainedList}\n`;
-      if (undecidedList.length > 0) _message += `${undecidedList}\n`;
+            //_message = `<strong>&#128073; Hey you! &#128072; There are <u>3 days</u> remaining to vote on proposal:</strong>\n\n${item.title}\n\n${tally}`;
+            description = '👉 Hey you! 👈 There are *3 days* remaining to vote on proposal';
+            //if (unchained.length > 0) _message += `${unchainedList}\n`;
+            if (unchained.length > 0) show_unchained = true;
+            //if (undecidedList.length > 0) _message += `${undecidedList}\n`;
+            if (undecidedList.length > 0) show_undecided = true;
             storedAlerts[item._id] = 3;
           } else if (blocksRemaining < 720 && blocksRemaining > 670) {
             if (storedAlerts[item._id] === 1) return;
-            _message = `<strong>&#9888; Warning! &#9888; There is only <u>1 day</u> remaining to vote on proposal:</strong>\n\n${item.title}\n\n${tally}`;
-            if (unchained.length > 0) _message += `${unchainedList}\n`;
-            if (undecidedList.length > 0) _message += `${undecidedList}\n`;
+            //_message = `<strong>&#9888; Warning! &#9888; There is only <u>1 day</u> remaining to vote on proposal:</strong>\n\n${item.title}\n\n${tally}`;
+            description = '⚠ Warning! ⚠ There is only *1 day* remaining to vote on proposal';
+            //if (unchained.length > 0) _message += `${unchainedList}\n`;
+            if (unchained.length > 0) show_unchained = true;
+            //if (undecidedList.length > 0) _message += `${undecidedList}\n`;
+            if (undecidedList.length > 0) show_undecided = true;
             storedAlerts[item._id] = 1;
           } else if (blocksRemaining < 360 && blocksRemaining > 310) {
             if (storedAlerts[item._id] === 0.5) return;
-            _message = `<strong>&#8252; Alert! &#8252; There are only <u>12 hours</u> remaining to vote on proposal:</strong>\n\n${item.title}\n\n${tally}`;
-            if (unchained.length > 0) _message += `${unchainedList}\n`;
-      if (undecidedList.length > 0) _message += `${undecidedList}\n`;
+            //_message = `<strong>&#8252; Alert! &#8252; There are only <u>12 hours</u> remaining to vote on proposal:</strong>\n\n${item.title}\n\n${tally}`;
+            description = '‼ Alert! ‼ There are only *12 hours* remaining to vote on proposal';
+            //if (unchained.length > 0) _message += `${unchainedList}\n`;
+            if (unchained.length > 0) show_unchained = true;
+            //if (undecidedList.length > 0) _message += `${undecidedList}\n`;
+            if (undecidedList.length > 0) show_undecided = true;
             storedAlerts[item._id] = 0.5;
           } else if (blocksRemaining <= 7) {
             if (storedAlerts[item._id] === 0) return;
-            _message = `<strong>&#9760; The council voting period has elapsed for proposal:</strong>\n\n${item.title}\n\n${tally}`;
-      if (unchained.length > 0) _message += `${unchainedList}\n`;
-      if (undecidedList.length > 0) _message += `${failedList}\n`;
+            //_message = `<strong>&#9760; The council voting period has elapsed for proposal:</strong>\n\n${item.title}\n\n${tally}`;
+            description = '☠ The council voting period has elapsed for proposal';
+            //if (unchained.length > 0) _message += `${unchainedList}\n`;
+            if (unchained.length > 0) show_unchained = true;
+            //if (undecidedList.length > 0) _message += `${failedList}\n`;
+            if (undecidedList.length > 0) show_failed = true;
             storedAlerts[item._id] = 0;
           } else {
             return;
           }
 
-          _message += `<i><a href='https://www.cyberrepublic.org/proposals/${item._id}'>View the full proposal here</a></i>\n\nUse /proposals to fetch real time voting status`;
-          message.channel.send(_message);
-          console.log(_message);
+          //_message += `<i><a href='https://www.cyberrepublic.org/proposals/${item._id}'>View the full proposal here</a></i>\n\nUse /proposals to fetch real time voting status`;
+          //message.channel.send(_message);
+          //console.log(_message);
+          
+          // Send embeded message
+          const embed = new MessageEmbed()
+          .setColor(0x5BFFD0)
+          .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
+          .setTitle(item.title)
+          .setURL(`https://www.cyberrepublic.org/proposals/${item._id}`)
+          //.setDescription(description)
+          .addField(description, "\u200b")
+          .addField("__Current voting status__", voting_status);
+          if (show_unchained) embed.addField("__Warnings__", unchainedList+'\u200b');
+          if (show_undecided) embed.addField("__Council members who have not yet voted__", undecidedList+'\u200b');
+          if (show_failed) embed.addField("__Council members who failed to vote__", failedList+'\u200b');
+          embed.setTimestamp();
+          embed.setFooter("Support bot creator with ELA donation to EUSMsck3svNiacva9LfwrLfbvNnUU27z77", "https://i.postimg.cc/Yq1g9cWv/avatar.png");
+          
+          message.channel.send({ embeds: [embed] });
         });
+      } else {
+        // Send embeded message
+        const embed = new MessageEmbed()
+        .setColor(0x5BFFD0)
+        .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
+        .setTitle('Cyber Republic - Proposals')
+        .setURL('https://www.cyberrepublic.org/proposals')
+        .addField("There is currently no active proposal", "\u200b")
+        embed.setTimestamp();
+        embed.setFooter("Support bot creator with ELA donation to EUSMsck3svNiacva9LfwrLfbvNnUU27z77", "https://i.postimg.cc/Yq1g9cWv/avatar.png");
+        
+        message.channel.send({ embeds: [embed] });
       }
       
     }, check_interval);

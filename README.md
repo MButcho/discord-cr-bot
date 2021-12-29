@@ -33,3 +33,7 @@ npm install node-fetch
 ```bash
 node index.js
 ```
+
+Any donation to ELA address EUSMsck3svNiacva9LfwrLfbvNnUU27z77 or mbutcho (CryptoName) is much appreciated.
+
+### Thank you and enjoy!
