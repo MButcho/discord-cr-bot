@@ -4,7 +4,7 @@ const { token } = require('./config.json');
 const request = require('request');
 const fetch = require('node-fetch');
 let loop = false;
-const check_mins = 0.5, check_interval = check_mins * 60 * 1000; //This checks every 10 minutes, change 10 to whatever minute you'd like
+const check_mins = 1, check_interval = check_mins * 60 * 1000; //This checks every 10 minutes, change 10 to whatever minute you'd like
 
 // Create a new client instance
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]});
@@ -19,10 +19,64 @@ client.once('ready', () => {
   //channel.send('Such language is prohibited!');
 });
 
-client.on('messageCreate', (message) => {
-  /*if(message.content.toLowerCase().includes('fudge') || message.content.toLowerCase().includes('pudding')){
-    message.channel.send('Such language is prohibited!');
-  }*/
+client.on('messageCreate', async (message) => {
+  // get date&time in nice format
+  var d = new Date();
+  d = new Date(d.getTime() - 3000000);
+  var date_now = d.getFullYear().toString()+"-"+((d.getMonth()+1).toString().length==2?(d.getMonth()+1).toString():"0"+(d.getMonth()+1).toString())+"-"+(d.getDate().toString().length==2?d.getDate().toString():"0"+d.getDate().toString())+" "+(d.getHours().toString().length==2?d.getHours().toString():"0"+d.getHours().toString())+":"+((parseInt(d.getMinutes()/5)*5).toString().length==2?(parseInt(d.getMinutes()/5)*5).toString():"0"+(parseInt(d.getMinutes()/5)*5).toString())+":00";
+  
+  if(message.content.toLowerCase().includes('/halving')) {
+    //console.log(`Halving Command Triggered ${Date()}`);
+    console.log(`Halving Command Triggered ${date_now}`);
+    
+    const halvingBlocks = 1051200;
+    const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
+    const height = await block.json();
+    
+    let halvingBlock = halvingBlocks*(Math.trunc(parseInt(height.Result)/halvingBlocks)+1);
+    
+    const blocksToGo = halvingBlock - parseInt(height.Result);
+    const secondsRemaining = blocksToGo * 2 * 60;
+
+    let days = Math.floor(secondsRemaining / (60 * 60 * 24));
+    let hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
+    let minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
+
+    //let halving = `<b>Elastos Halving Countdown</b> \n \n${days} days, ${hours} hours, ${minutes} minutes`;
+
+    // Send embeded message
+    const embed = new MessageEmbed()
+    .setColor(0x5BFFD0)
+    .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
+    .setTitle('Cyber Republic - Refactoring')
+    .setURL('https://www.cyberrepublic.org/proposals/5fe404ea7b3b430078ea4866')
+    .addField('Elastos Halving Countdown', `${days} days, ${hours} hours, ${minutes} minutes`)
+    embed.setTimestamp();
+    embed.setFooter("Support bot creator with ELA donation to EUSMsck3svNiacva9LfwrLfbvNnUU27z77", "https://i.postimg.cc/Yq1g9cWv/avatar.png");
+    
+    client.channels.cache.get(channel_id).send({ embeds: [embed] });
+    
+    //message.channel.send(halving);
+  }
+  /*bot.onText(/\/halving/, async (msg, data) => {
+  console.log(`Halving Command Triggered ${Date()}`);
+
+  const chatId = msg.chat.id;
+
+  const halvingBlock = 1051200;
+  const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
+  const height = await block.json();
+
+  const blocksToGo = halvingBlock - parseInt(height.Result);
+  const secondsRemaining = blocksToGo * 2 * 60;
+
+  let days = Math.floor(secondsRemaining / (60 * 60 * 24));
+  let hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
+  let minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
+
+  let halving = `<b>Elastos Halving Countdown</b> \n \n${days} days, ${hours} hours, ${minutes} minutes`;
+
+  bot.sendMessage(chatId, halving, { parse_mode: "HTML" });*/
 });
 
 
