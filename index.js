@@ -4,81 +4,13 @@ const { token } = require('./config.json');
 const request = require('request');
 const fetch = require('node-fetch');
 let loop = false;
-const check_mins = 1, check_interval = check_mins * 60 * 1000; //This checks every 10 minutes, change 10 to whatever minute you'd like
+const check_mins = 30, check_interval = check_mins * 60 * 1000; //This checks every 10 minutes, change 10 to whatever minute you'd like
 
 // Create a new client instance
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]});
 
 const channel_id = '920225673887494157'; // MB Test server #general
 //const channel_id = '917029748192985139'; // Elastos Discord #🌎┃cyber-republic-dao
-
-// When the client is ready, run this code (only once)
-client.once('ready', () => {
-  console.log(`Logged in as ${client.user.tag}`);
-  client.channels.cache.get(channel_id).send('I am up and running!');
-  //channel.send('Such language is prohibited!');
-});
-
-client.on('messageCreate', async (message) => {
-  // get date&time in nice format
-  var d = new Date();
-  d = new Date(d.getTime() - 3000000);
-  var date_now = d.getFullYear().toString()+"-"+((d.getMonth()+1).toString().length==2?(d.getMonth()+1).toString():"0"+(d.getMonth()+1).toString())+"-"+(d.getDate().toString().length==2?d.getDate().toString():"0"+d.getDate().toString())+" "+(d.getHours().toString().length==2?d.getHours().toString():"0"+d.getHours().toString())+":"+((parseInt(d.getMinutes()/5)*5).toString().length==2?(parseInt(d.getMinutes()/5)*5).toString():"0"+(parseInt(d.getMinutes()/5)*5).toString())+":00";
-  
-  if(message.content.toLowerCase().includes('/halving')) {
-    //console.log(`Halving Command Triggered ${Date()}`);
-    console.log(`Halving Command Triggered ${date_now}`);
-    
-    const halvingBlocks = 1051200;
-    const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
-    const height = await block.json();
-    
-    let halvingBlock = halvingBlocks*(Math.trunc(parseInt(height.Result)/halvingBlocks)+1);
-    
-    const blocksToGo = halvingBlock - parseInt(height.Result);
-    const secondsRemaining = blocksToGo * 2 * 60;
-
-    let days = Math.floor(secondsRemaining / (60 * 60 * 24));
-    let hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
-    let minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
-
-    //let halving = `<b>Elastos Halving Countdown</b> \n \n${days} days, ${hours} hours, ${minutes} minutes`;
-
-    // Send embeded message
-    const embed = new MessageEmbed()
-    .setColor(0x5BFFD0)
-    .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
-    .setTitle('Cyber Republic - Refactoring')
-    .setURL('https://www.cyberrepublic.org/proposals/5fe404ea7b3b430078ea4866')
-    .addField('Elastos Halving Countdown', `${days} days, ${hours} hours, ${minutes} minutes`)
-    embed.setTimestamp();
-    embed.setFooter("Support bot creator with ELA donation to EUSMsck3svNiacva9LfwrLfbvNnUU27z77", "https://i.postimg.cc/Yq1g9cWv/avatar.png");
-    
-    client.channels.cache.get(channel_id).send({ embeds: [embed] });
-    
-    //message.channel.send(halving);
-  }
-  /*bot.onText(/\/halving/, async (msg, data) => {
-  console.log(`Halving Command Triggered ${Date()}`);
-
-  const chatId = msg.chat.id;
-
-  const halvingBlock = 1051200;
-  const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
-  const height = await block.json();
-
-  const blocksToGo = halvingBlock - parseInt(height.Result);
-  const secondsRemaining = blocksToGo * 2 * 60;
-
-  let days = Math.floor(secondsRemaining / (60 * 60 * 24));
-  let hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
-  let minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
-
-  let halving = `<b>Elastos Halving Countdown</b> \n \n${days} days, ${hours} hours, ${minutes} minutes`;
-
-  bot.sendMessage(chatId, halving, { parse_mode: "HTML" });*/
-});
-
 
 // Basic variables
 const council = {
@@ -95,6 +27,141 @@ const council = {
   "5c738c9a471cb3009422b42e": "Jingyu Niu",
   "5ee0d99f9e10fd007849e53e": "Orchard Trinity",
 };
+
+
+// When the client is ready, run this code (only once)
+client.once('ready', () => {
+  console.log(`Logged in as ${client.user.tag}`);
+  client.channels.cache.get(channel_id).send('I am up and running!');
+  //channel.send('Such language is prohibited!');
+});
+
+client.on('messageCreate', async (message) => {
+  // get date&time in nice format
+  var d = new Date();
+  d = new Date(d.getTime() - 3000000);
+  var date_now = d.getFullYear().toString()+"-"+((d.getMonth()+1).toString().length==2?(d.getMonth()+1).toString():"0"+(d.getMonth()+1).toString())+"-"+(d.getDate().toString().length==2?d.getDate().toString():"0"+d.getDate().toString())+" "+(d.getHours().toString().length==2?d.getHours().toString():"0"+d.getHours().toString())+":"+((parseInt(d.getMinutes()/5)*5).toString().length==2?(parseInt(d.getMinutes()/5)*5).toString():"0"+(parseInt(d.getMinutes()/5)*5).toString())+":00";
+  
+  // /halving command
+  if(message.content.toLowerCase().includes('/halving')) {
+    //console.log(`Halving Command Triggered ${Date()}`);
+    console.log(`Halving Command Triggered ${date_now}`);
+    
+    const halvingBlocks = 1051200;
+    const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
+    const height = await block.json();
+    
+    // Get next halving block
+    let halvingBlock = halvingBlocks*(Math.trunc(parseInt(height.Result)/halvingBlocks)+1);
+    
+    const blocksToGo = halvingBlock - parseInt(height.Result);
+    const secondsRemaining = blocksToGo * 2 * 60;
+
+    let days = Math.floor(secondsRemaining / (60 * 60 * 24));
+    let hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
+    let minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
+
+    // Send embeded message
+    const embed = new MessageEmbed()
+    .setColor(0x5BFFD0)
+    .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
+    .setTitle('Cyber Republic - Refactoring')
+    .setURL('https://www.cyberrepublic.org/proposals/5fe404ea7b3b430078ea4866')
+    .addField('Elastos Halving Countdown', `${days} days, ${hours} hours, ${minutes} minutes`)
+    embed.setTimestamp();
+    embed.setFooter("Support bot creator with ELA donation to EUSMsck3svNiacva9LfwrLfbvNnUU27z77", "https://i.postimg.cc/Yq1g9cWv/avatar.png");
+    
+    message.channel.send({ embeds: [embed] });
+    //client.channels.cache.get(channel_id).send({ embeds: [embed] });
+  }
+  
+  // /proposals command
+  if(message.content.toLowerCase().includes('/proposals')) {
+    console.log(`Proposals Command Triggered ${date_now}`);
+    
+    const res = await fetch("https://api.cyberrepublic.org/api/cvote/list_public?voteResult=all");
+    const proposalList = await res.json();
+
+    const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
+    const height = await block.json();
+
+    const active = proposalList.data.list.filter((item) => {
+      return item.proposedEndsHeight > height.Result && item.status === "PROPOSED";
+      //return item.proposedEndsHeight < height.Result && item.status === "ACTIVE"; // test
+    });
+    
+    const embed = new MessageEmbed()
+    .setColor(0x5BFFD0)
+    .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
+    .setTitle('Cyber Republic - Proposals')
+    .setURL('https://www.cyberrepublic.org/proposals');
+
+    if (active.length > 0) {
+      let index = 0;
+       
+      active.reverse().forEach((item, index) => {
+        index++;
+        
+        //if(index > 15) {
+        const secondsRemaining =
+          parseFloat(item.proposedEndsHeight) - parseFloat(height.Result) < 0
+            ? 0
+            : (parseFloat(item.proposedEndsHeight) - parseFloat(height.Result)) * 2 * 60;
+        const days = Math.floor(secondsRemaining / (60 * 60 * 24));
+        const hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
+        const minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
+
+        //embed.addField(`${index}. ${item.title}`, `Proposed by - **${item.proposedBy}**\n**Time remaining** - ${days} days, ${hours} hours, ${minutes} minutes\n\u200b`)
+        embed.addField(`${index}. ${item.title}`, `Proposed by - ${item.proposedBy}\n**__Time remaining__** - ${days} days, ${hours} hours, ${minutes} minutes\n`)
+    
+        let support = 0;
+        let reject = 0;
+        let undecided = 0;
+        let abstention = 0;
+        let unchained = [];
+
+        item.voteResult.forEach((vote) => {
+          if (vote.value === "support" && vote.status === "chained") support++;
+          if (vote.value === "reject" && vote.status === "chained") reject++;
+          if (vote.value === "undecided") undecided++;
+          if (vote.value === "abstention" && vote.status === "chained") abstention++;
+          if (vote.value !== "undecided" && vote.status === "unchain") {
+            unchained.push(`${council[vote.votedBy]} voted ${vote.value} but did not chain the vote`);
+          }
+        });
+
+        let unchainedList = '';
+          if (unchained.length > 0) {
+          unchained.forEach((warning) => {
+            unchainedList += `${warning}\n`
+          });
+        }
+                
+        //proposals += `<b><u>Council Votes</u></b>\n&#9989;  Support - <b>${support}</b>\n&#10060;  Reject - <b>${reject}</b>\n&#128280;  Abstain - <b>${abstention}</b>\n&#9888;  Undecided - <b>${undecided}</b>\n\n`;
+        let voting_status = `✅  Support - **${support}**\n❌  Reject - **${reject}**\n🔘  Abstain - **${abstention}**\n⚠  Undecided - **${undecided}**\n`;
+        
+        //proposals += `<i><a href='https://www.cyberrepublic.org/proposals/${item._id}'>View on Cyber Republic website</a></i>`;
+        embed.addField('__Council Votes__',voting_status);
+        
+        if (unchained.length > 0) {
+          embed.addField('⚠ __Warnings__ ⚠',unchainedList+'\n\u200b');
+        } else {
+          embed.addField('\u200b','\u200b');
+        }
+        //}
+      });
+      //message.channel.send(proposals);
+    } else {
+      embed.addField("There are currently no proposals in the council voting period", "\u200b");
+      //message.channel.send(proposals);
+    }
+    
+    embed.setTimestamp();
+    embed.setFooter("Support bot creator with ELA donation to EUSMsck3svNiacva9LfwrLfbvNnUU27z77", "https://i.postimg.cc/Yq1g9cWv/avatar.png");
+    
+    message.channel.send({ embeds: [embed] });
+  }
+});
 
 // Automated check
 let storedAlerts = {};
