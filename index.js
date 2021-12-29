@@ -9,8 +9,8 @@ const check_mins = 30, check_interval = check_mins * 60 * 1000; //This checks ev
 // Create a new client instance
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]});
 
-const channel_id = '920225673887494157'; // MB Test server #general
-//const channel_id = '917029748192985139'; // Elastos Discord #🌎┃cyber-republic-dao
+//const channel_id = '920225673887494157'; // MB Test server #general
+const channel_id = '917029748192985139'; // Elastos Discord #🌎┃cyber-republic-dao
 
 // Basic variables
 const council = {
