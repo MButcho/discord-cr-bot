@@ -1,4 +1,5 @@
 # Discord bot for Cyber Republic
+Special thanks to @RyanC for letting me use his Telegram bot source @ https://github.com/racollette/elabot
 
 ## Installing bot
 
@@ -15,11 +16,9 @@ Use https://discord.com/developers/applications
 git clone https://github.com/MButcho/discord-cr-bot
 ```
 
-### Install discord.js
+### Install dependencies
 ```bash
-npm install discord.js
-npm install request
-npm install node-fetch
+npm install
 ```
 
 ### Create config.json in cloned folder
