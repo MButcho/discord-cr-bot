@@ -35,7 +35,16 @@ const footer_img = 'https://i.postimg.cc/Yq1g9cWv/avatar.png';
 // When the client is ready, run this code (only once)
 client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
-  client.channels.cache.get(channel_id).send('I am up and running!');
+  const embed = new MessageEmbed()
+  .setColor(0x5BFFD0)
+  .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
+  .setTitle('Cyber Republic - Proposals')
+  .setURL('https://www.cyberrepublic.org/proposals')
+  .addField("I am up and running!", "\u200b")
+  embed.setTimestamp();
+  embed.setFooter(footer_text, footer_img);
+  //client.channels.cache.get(channel_id).send('I am up and running!');
+  client.channels.cache.get(channel_id).send({ embeds: [embed] });
   //channel.send('Such language is prohibited!');
 });
 
