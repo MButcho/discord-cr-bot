@@ -54,8 +54,7 @@ client.once('ready', () => {
 client.on('messageCreate', async (message) => {
   // get date&time in nice format
   let command_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')+" UTC";
-  
-  
+    
   // /halving command
   if(message.content.toLowerCase().includes('/ping')) {
     console.log(`Ping Command Triggered ${command_date}`);
