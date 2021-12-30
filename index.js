@@ -8,6 +8,9 @@ let check_mins = 100;
 if (ver) check_mins = 1;
 let check_interval = check_mins * 60 * 1000;
 
+// Bot start date
+let start_date = '';
+
 // Create a new client instance
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]});
 let channel_id = '917029748192985139'; // Elastos Discord #🌎┃cyber-republic-dao
@@ -35,6 +38,9 @@ const footer_img = 'https://i.postimg.cc/Yq1g9cWv/avatar.png';
 // When the client is ready, run this code (only once)
 client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
+  var d = new Date();
+  d = new Date(d.getTime() - 3000000);
+  start_date = d.getFullYear().toString()+"-"+((d.getMonth()+1).toString().length==2?(d.getMonth()+1).toString():"0"+(d.getMonth()+1).toString())+"-"+(d.getDate().toString().length==2?d.getDate().toString():"0"+d.getDate().toString())+" "+(d.getHours().toString().length==2?d.getHours().toString():"0"+d.getHours().toString())+":"+((parseInt(d.getMinutes()/5)*5).toString().length==2?(parseInt(d.getMinutes()/5)*5).toString():"0"+(parseInt(d.getMinutes()/5)*5).toString())+":00 UTC";
   /*const embed = new MessageEmbed()
   .setColor(0x5BFFD0)
   .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
@@ -52,7 +58,7 @@ client.on('messageCreate', async (message) => {
   // get date&time in nice format
   var d = new Date();
   d = new Date(d.getTime() - 3000000);
-  var date_now = d.getFullYear().toString()+"-"+((d.getMonth()+1).toString().length==2?(d.getMonth()+1).toString():"0"+(d.getMonth()+1).toString())+"-"+(d.getDate().toString().length==2?d.getDate().toString():"0"+d.getDate().toString())+" "+(d.getHours().toString().length==2?d.getHours().toString():"0"+d.getHours().toString())+":"+((parseInt(d.getMinutes()/5)*5).toString().length==2?(parseInt(d.getMinutes()/5)*5).toString():"0"+(parseInt(d.getMinutes()/5)*5).toString())+":00";
+  var date_now = d.getFullYear().toString()+"-"+((d.getMonth()+1).toString().length==2?(d.getMonth()+1).toString():"0"+(d.getMonth()+1).toString())+"-"+(d.getDate().toString().length==2?d.getDate().toString():"0"+d.getDate().toString())+" "+(d.getHours().toString().length==2?d.getHours().toString():"0"+d.getHours().toString())+":"+((parseInt(d.getMinutes()/5)*5).toString().length==2?(parseInt(d.getMinutes()/5)*5).toString():"0"+(parseInt(d.getMinutes()/5)*5).toString())+":00 UTC";
   
   // /halving command
   if(message.content.toLowerCase().includes('/ping')) {
@@ -64,7 +70,7 @@ client.on('messageCreate', async (message) => {
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Cyber Republic - Proposals')
     .setURL('https://www.cyberrepublic.org/proposals')
-    .addField("I am up and running!", "\u200b")
+    .addField(`I am up and running since ${start_date}`, '\u200b')
     embed.setTimestamp();
     embed.setFooter(footer_text, footer_img);
     embed.setFooter(footer_text, footer_img);
