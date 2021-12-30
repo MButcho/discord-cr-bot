@@ -35,7 +35,7 @@ const footer_img = 'https://i.postimg.cc/Yq1g9cWv/avatar.png';
 // When the client is ready, run this code (only once)
 client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
-  const embed = new MessageEmbed()
+  /*const embed = new MessageEmbed()
   .setColor(0x5BFFD0)
   .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
   .setTitle('Cyber Republic - Proposals')
@@ -45,7 +45,7 @@ client.once('ready', () => {
   embed.setFooter(footer_text, footer_img);
   //client.channels.cache.get(channel_id).send('I am up and running!');
   client.channels.cache.get(channel_id).send({ embeds: [embed] });
-  //channel.send('Such language is prohibited!');
+  //channel.send('Such language is prohibited!');*/
 });
 
 client.on('messageCreate', async (message) => {
@@ -53,6 +53,25 @@ client.on('messageCreate', async (message) => {
   var d = new Date();
   d = new Date(d.getTime() - 3000000);
   var date_now = d.getFullYear().toString()+"-"+((d.getMonth()+1).toString().length==2?(d.getMonth()+1).toString():"0"+(d.getMonth()+1).toString())+"-"+(d.getDate().toString().length==2?d.getDate().toString():"0"+d.getDate().toString())+" "+(d.getHours().toString().length==2?d.getHours().toString():"0"+d.getHours().toString())+":"+((parseInt(d.getMinutes()/5)*5).toString().length==2?(parseInt(d.getMinutes()/5)*5).toString():"0"+(parseInt(d.getMinutes()/5)*5).toString())+":00";
+  
+  // /halving command
+  if(message.content.toLowerCase().includes('/ping')) {
+    console.log(`Ping Command Triggered ${date_now}`);
+    
+    // Send embeded message
+    const embed = new MessageEmbed()
+    .setColor(0x5BFFD0)
+    .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
+    .setTitle('Cyber Republic - Proposals')
+    .setURL('https://www.cyberrepublic.org/proposals')
+    .addField("I am up and running!", "\u200b")
+    embed.setTimestamp();
+    embed.setFooter(footer_text, footer_img);
+    embed.setFooter(footer_text, footer_img);
+    
+    message.channel.send({ embeds: [embed] });
+    //client.channels.cache.get(channel_id).send({ embeds: [embed] });
+  }
   
   // /halving command
   if(message.content.toLowerCase().includes('/halving')) {
@@ -87,8 +106,7 @@ client.on('messageCreate', async (message) => {
     //client.channels.cache.get(channel_id).send({ embeds: [embed] });
   }
   
-  // Command section
-
+  // /election command
   if(message.content.toLowerCase().includes('/election')) {
     console.log(`Election Command Triggered ${date_now}`);
     
