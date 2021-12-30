@@ -13,7 +13,6 @@ Use https://discord.com/developers/applications
 
 #### Bot Permissions
 + Send Messages
-+ Managed Messages
 + Embed Links
 + Read Message History
 ### Clone repository
