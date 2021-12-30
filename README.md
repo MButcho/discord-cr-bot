@@ -27,7 +27,7 @@ npm install
 ### Create config.json in cloned folder
 ```json
 {
-	"token": "<your bot token>",
+  "token": "<your bot token>",
   "clientId": "<your application ID>",
   "guildId":  "<your server ID>"
 }
