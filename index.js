@@ -163,8 +163,8 @@ client.on('interactionCreate', async interaction => {
     const height = await block.json();
 
     const active = proposalList.data.list.filter((item) => {
-      //return item.proposedEndsHeight > height.Result && item.status === "PROPOSED";
-      return item.proposedEndsHeight < height.Result && item.status === "ACTIVE"; // test
+      return item.proposedEndsHeight > height.Result && item.status === "PROPOSED";
+      //return item.proposedEndsHeight < height.Result && item.status === "ACTIVE"; // test
     });
     
     const embed = new MessageEmbed()
