@@ -5,11 +5,12 @@ const request = require('request');
 const fetch = require('node-fetch');
 let loop = false;
 let check_mins = 100;
-if (ver) check_mins = 1;
+if (ver) check_mins = 10;
 let check_interval = check_mins * 60 * 1000;
 
 // Bot start date
 let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')+" UTC";
+let start_date_raw = new Date();
 
 // Create a new client instance
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]});
@@ -56,22 +57,36 @@ client.on('interactionCreate', async interaction => {
   
   // get date&time
   let command_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')+" UTC";
-
+  let command_date_raw = new Date();
+  let seconds_since_start = (command_date_raw - start_date_raw) / 1000;
+  
 	const { commandName } = interaction;
 
 	if (commandName === 'ping-cr-bot') {
+    console.log(`Ping Command Triggered ${command_date}`);
+    
+    let days = Math.floor(seconds_since_start / (60 * 60 * 24));
+    let hours = Math.floor((seconds_since_start % (60 * 60 * 24)) / (60 * 60));
+    let minutes = Math.floor((seconds_since_start % (60 * 60)) / 60);
+    
+    // Get next halving block
+    //let halvingBlock = halvingBlocks*(Math.trunc(parseInt(height.Result)/halvingBlocks)+1);
+    //let next_check_mins = check_mins*(Math.trunc(parseInt(seconds_since_start)/check_mins)+1);
+    let next_check_round = Math.trunc((parseInt(seconds_since_start)/60)/check_mins)+1;
+    
+    let next_check_mins = (check_mins*next_check_round)-(seconds_since_start/60).toFixed(2);
+    
     // Send embeded message
     const embed = new MessageEmbed()
     .setColor(0x5BFFD0)
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Cyber Republic - Proposals')
     .setURL('https://www.cyberrepublic.org/proposals')
-    .addField(`I am up and running since ${start_date}`, '\u200b')
+    .addField(`I am up and running:`, `${days} days, ${hours} hours, ${minutes} minutes\n\nNext automatic proposals check: **${next_check_mins} mins**\n\nBot start: ${start_date}\,\u200b`)
     embed.setTimestamp();
     embed.setFooter(footer_text, footer_img);
     
 		await interaction.reply({ embeds: [embed] });
-    console.log(`Ping Command Triggered ${command_date}`);
       
 	} else if (commandName === 'halving') {
     console.log(`Halving Command Triggered ${command_date}`);
@@ -101,6 +116,7 @@ client.on('interactionCreate', async interaction => {
     embed.setFooter(footer_text, footer_img);
     
     await interaction.reply({ embeds: [embed] });
+    
 	} else if (commandName === 'election') {
 		console.log(`Election Command Triggered ${command_date}`);
     
@@ -153,6 +169,7 @@ client.on('interactionCreate', async interaction => {
     embed.setFooter(footer_text, footer_img);
     
     await interaction.reply({ embeds: [embed] });
+    
 	} else if (commandName === 'proposals') {
     console.log(`Proposals Command Triggered ${command_date}`);
     
@@ -235,12 +252,12 @@ client.on('interactionCreate', async interaction => {
 	}
 });
 
-client.on('messageCreate', async (message) => {
+/*client.on('messageCreate', async (message) => {
   // get date&time
   //let command_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')+" UTC";
     
-  // old /ping command
-  /*if(message.content.toLowerCase().startsWith('/ping') || message.content.toLowerCase().startsWith('!ping')) {
+  // old /ping response
+  if(message.content.toLowerCase().startsWith('/ping') || message.content.toLowerCase().startsWith('!ping')) {
     console.log(`Ping Command Triggered ${command_date}`);
     
     // Send embeded message
@@ -257,7 +274,7 @@ client.on('messageCreate', async (message) => {
     //client.channels.cache.get(channel_id).send({ embeds: [embed] });
   }*/
     
-  // old council command
+  // council response
   /*if(message.content.toLowerCase().includes('/council')) {
     console.log(`Council Command Triggered ${command_date}`);
 
@@ -292,8 +309,8 @@ client.on('messageCreate', async (message) => {
       }
     }
     request(options, callback);
-  }*/
-});
+  }
+});*/
 
 // Automated check
 let storedAlerts = {};
