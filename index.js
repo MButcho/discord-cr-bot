@@ -5,11 +5,12 @@ const request = require('request');
 const fetch = require('node-fetch');
 let loop = false;
 let check_mins = 100;
-if (ver) check_mins = 1;
+if (ver) check_mins = 10;
 let check_interval = check_mins * 60 * 1000;
 
 // Bot start date
-let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')+" UTC";
+let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+let start_date_raw = new Date();
 
 // Create a new client instance
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]});
@@ -37,13 +38,13 @@ const footer_img = 'https://i.postimg.cc/Yq1g9cWv/avatar.png';
 
 // When the client is ready, run this code (only once)
 client.once('ready', () => {
-  console.log(`Logged in as ${client.user.tag} on ${start_date}`);
+  console.log(`${start_date} Logged in as ${client.user.tag}`);
   /*const embed = new MessageEmbed()
   .setColor(0x5BFFD0)
   .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
   .setTitle('Cyber Republic - Proposals')
   .setURL('https://www.cyberrepublic.org/proposals')
-  .addField(`I am up and running since ${start_date}`, "\u200b")
+  .addField(`I am up and running since ${start_date} UTC`, "\u200b")
   embed.setTimestamp();
   embed.setFooter(footer_text, footer_img);
   //client.channels.cache.get(channel_id).send('I am up and running!');
@@ -51,13 +52,29 @@ client.once('ready', () => {
   //channel.send('Such language is prohibited!');*/
 });
 
-client.on('messageCreate', async (message) => {
-  // get date&time in nice format
-  let command_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')+" UTC";
+client.on('interactionCreate', async interaction => {
+  if (!interaction.isCommand()) return;
+  
+  // get date&time
+  let command_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+  let command_date_raw = new Date();
+  let seconds_since_start = (command_date_raw - start_date_raw) / 1000;
+  
+  const { commandName } = interaction;
+
+  if (commandName === 'ping-cr-bot') {
+    console.log(`${command_date} Ping command triggered`);
     
-  // /ping command
-  if(message.content.toLowerCase().startsWith('/ping') || message.content.toLowerCase().startsWith('!ping')) {
-    console.log(`Ping Command Triggered ${command_date}`);
+    let days = Math.floor(seconds_since_start / (60 * 60 * 24));
+    let hours = Math.floor((seconds_since_start % (60 * 60 * 24)) / (60 * 60));
+    let minutes = Math.floor((seconds_since_start % (60 * 60)) / 60);
+    
+    // Get next halving block
+    //let halvingBlock = halvingBlocks*(Math.trunc(parseInt(height.Result)/halvingBlocks)+1);
+    //let next_check_mins = check_mins*(Math.trunc(parseInt(seconds_since_start)/check_mins)+1);
+    let next_check_round = Math.trunc((parseInt(seconds_since_start)/60)/check_mins)+1;
+    
+    let next_check_mins = ((check_mins*next_check_round)-(seconds_since_start/60)).toFixed(2);
     
     // Send embeded message
     const embed = new MessageEmbed()
@@ -65,19 +82,14 @@ client.on('messageCreate', async (message) => {
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Cyber Republic - Proposals')
     .setURL('https://www.cyberrepublic.org/proposals')
-    .addField(`I am up and running since ${start_date}`, '\u200b')
+    .addField(`I am up and running:`, `${days} days, ${hours} hours, ${minutes} minutes\n\n**Next automatic proposals check:** ${next_check_mins} mins\n\n**Bot start:** ${start_date} UTC\n\u200b`)
     embed.setTimestamp();
     embed.setFooter(footer_text, footer_img);
-    embed.setFooter(footer_text, footer_img);
     
-    message.channel.send({ embeds: [embed] });
-    //client.channels.cache.get(channel_id).send({ embeds: [embed] });
-  }
-  
-  // /halving command
-  if(message.content.toLowerCase().startsWith('/halving') || message.content.toLowerCase().startsWith('!halving')) {
-    //console.log(`Halving Command Triggered ${Date()}`);
-    console.log(`Halving Command Triggered ${command_date}`);
+    await interaction.reply({ embeds: [embed] });
+      
+  } else if (commandName === 'halving') {
+    console.log(`${command_date} Halving command triggered`);
     
     const halvingBlocks = 1051200;
     const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
@@ -103,13 +115,10 @@ client.on('messageCreate', async (message) => {
     embed.setTimestamp();
     embed.setFooter(footer_text, footer_img);
     
-    message.channel.send({ embeds: [embed] });
-    //client.channels.cache.get(channel_id).send({ embeds: [embed] });
-  }
-  
-  // /election command
-  if(message.content.toLowerCase().startsWith('/election') || message.content.toLowerCase().startsWith('!election')) {
-    console.log(`Election Command Triggered ${command_date}`);
+    await interaction.reply({ embeds: [embed] });
+    
+  } else if (commandName === 'election') {
+    console.log(`${command_date} Election command triggered`);
     
     const electionClose = 921730;
     const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
@@ -158,12 +167,117 @@ client.on('messageCreate', async (message) => {
     .addField('Election Closed', `${days} days, ${hours} hours, ${minutes} minutes`);
     embed.setTimestamp();
     embed.setFooter(footer_text, footer_img);
-    message.channel.send({ embeds: [embed] });
+    
+    await interaction.reply({ embeds: [embed] });
+    
+  } else if (commandName === 'proposals') {
+    await interaction.deferReply();
+    console.log(`${command_date} Proposals command triggered`);
+    
+    const res = await fetch("https://api.cyberrepublic.org/api/cvote/list_public?voteResult=all");
+    const proposalList = await res.json();
+
+    const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
+    const height = await block.json();
+
+    const active = proposalList.data.list.filter((item) => {
+      return item.proposedEndsHeight > height.Result && item.status === "PROPOSED";
+      //return item.proposedEndsHeight < height.Result && item.status === "ACTIVE"; // test
+    });
+    
+    const embed = new MessageEmbed()
+    .setColor(0x5BFFD0)
+    .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
+    .setTitle('Cyber Republic - Proposals')
+    .setURL('https://www.cyberrepublic.org/proposals');
+
+    if (active.length > 0) {
+      let index = 0;
+       
+      active.reverse().forEach((item, index) => {
+        index++;
+        
+        const secondsRemaining =
+          parseFloat(item.proposedEndsHeight) - parseFloat(height.Result) < 0
+            ? 0
+            : (parseFloat(item.proposedEndsHeight) - parseFloat(height.Result)) * 2 * 60;
+        const days = Math.floor(secondsRemaining / (60 * 60 * 24));
+        const hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
+        const minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
+
+        embed.addField(`${index}. ${item.title}`, `[Link to proposal](https://www.cyberrepublic.org/proposals/${item._id})`)
+        embed.addField(`__Proposed by__`, `${item.proposedBy}`);
+        embed.addField(`__Time remaining__`, `${days} days, ${hours} hours, ${minutes} minutes\n`)
+    
+        let support = 0;
+        let reject = 0;
+        let undecided = 0;
+        let abstention = 0;
+        let unchained = [];
+
+        item.voteResult.forEach((vote) => {
+          if (vote.value === "support" && vote.status === "chained") support++;
+          if (vote.value === "reject" && vote.status === "chained") reject++;
+          if (vote.value === "undecided") undecided++;
+          if (vote.value === "abstention" && vote.status === "chained") abstention++;
+          if (vote.value !== "undecided" && vote.status === "unchain") {
+            unchained.push(`${council[vote.votedBy]} voted ${vote.value} but did not chain the vote`);
+          }
+        });
+
+        let unchainedList = '';
+          if (unchained.length > 0) {
+          unchained.forEach((warning) => {
+            unchainedList += `${warning}\n`
+          });
+        }
+                
+        //proposals += `<b><u>Council Votes</u></b>\n&#9989;  Support - <b>${support}</b>\n&#10060;  Reject - <b>${reject}</b>\n&#128280;  Abstain - <b>${abstention}</b>\n&#9888;  Undecided - <b>${undecided}</b>\n\n`;
+        let voting_status = `✅  Support - **${support}**\n❌  Reject - **${reject}**\n🔘  Abstain - **${abstention}**\n⚠  Undecided - **${undecided}**\n\u200b`;
+        
+        if (unchained.length = 0) voting_status += '\u200b';
+        //proposals += `<i><a href='https://www.cyberrepublic.org/proposals/${item._id}'>View on Cyber Republic website</a></i>`;
+        embed.addField('__Council Votes__',voting_status);
+        
+        if (unchained.length > 0) embed.addField('⚠ __Warnings__ ⚠',unchainedList+'\n\u200b');
+      });
+    } else {
+      embed.addField("There are currently no proposals in the council voting period", "\u200b");
+    }
+    
+    embed.setTimestamp();
+    embed.setFooter(footer_text, footer_img);
+    
+		//await interaction.reply({ embeds: [embed] });
+		interaction.editReply({ embeds: [embed] });
   }
-  
-  // council command
+});
+
+/*client.on('messageCreate', async (message) => {
+  // get date&time
+  //let command_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+    
+  // old /ping response
+  if(message.content.toLowerCase().startsWith('/ping') || message.content.toLowerCase().startsWith('!ping')) {
+    console.log(`${command_date} Ping command triggered`);
+    
+    // Send embeded message
+    const embed = new MessageEmbed()
+    .setColor(0x5BFFD0)
+    .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
+    .setTitle('Cyber Republic - Proposals')
+    .setURL('https://www.cyberrepublic.org/proposals')
+    .addField(`I am up and running since ${start_date} UTC`, '\u200b')
+    embed.setTimestamp();
+    embed.setFooter(footer_text, footer_img);
+    
+    message.channel.send({ embeds: [embed] });
+    //client.channels.cache.get(channel_id).send({ embeds: [embed] });
+  }*/
+    
+  // council response
   /*if(message.content.toLowerCase().includes('/council')) {
-    console.log(`Council Command Triggered ${command_date}`);
+    console.log(`${command_date} Council command triggered`);
 
     const headers = {
       "content-type": "application/json;",
@@ -196,96 +310,8 @@ client.on('messageCreate', async (message) => {
       }
     }
     request(options, callback);
-  }*/
-  
-  // /proposals command
-  if(message.content.toLowerCase().startsWith('/proposals') || message.content.toLowerCase().startsWith('!proposals')) {
-  //if(message.content.toLowerCase().includes('/proposals')) {
-    console.log(`Proposals Command Triggered ${command_date}`);
-    
-    const res = await fetch("https://api.cyberrepublic.org/api/cvote/list_public?voteResult=all");
-    const proposalList = await res.json();
-
-    const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
-    const height = await block.json();
-
-    const active = proposalList.data.list.filter((item) => {
-      return item.proposedEndsHeight > height.Result && item.status === "PROPOSED";
-      //return item.proposedEndsHeight < height.Result && item.status === "ACTIVE"; // test
-    });
-    
-    const embed = new MessageEmbed()
-    .setColor(0x5BFFD0)
-    .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
-    .setTitle('Cyber Republic - Proposals')
-    .setURL('https://www.cyberrepublic.org/proposals');
-
-    if (active.length > 0) {
-      let index = 0;
-       
-      active.reverse().forEach((item, index) => {
-        index++;
-        
-        //if(index > 15) {
-        const secondsRemaining =
-          parseFloat(item.proposedEndsHeight) - parseFloat(height.Result) < 0
-            ? 0
-            : (parseFloat(item.proposedEndsHeight) - parseFloat(height.Result)) * 2 * 60;
-        const days = Math.floor(secondsRemaining / (60 * 60 * 24));
-        const hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
-        const minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
-
-        //embed.addField(`${index}. ${item.title}`, `Proposed by - **${item.proposedBy}**\n**Time remaining** - ${days} days, ${hours} hours, ${minutes} minutes\n\u200b`)
-        embed.addField(`${index}. ${item.title}`, `Proposed by - ${item.proposedBy}\n**__Time remaining__** - ${days} days, ${hours} hours, ${minutes} minutes\n`)
-    
-        let support = 0;
-        let reject = 0;
-        let undecided = 0;
-        let abstention = 0;
-        let unchained = [];
-
-        item.voteResult.forEach((vote) => {
-          if (vote.value === "support" && vote.status === "chained") support++;
-          if (vote.value === "reject" && vote.status === "chained") reject++;
-          if (vote.value === "undecided") undecided++;
-          if (vote.value === "abstention" && vote.status === "chained") abstention++;
-          if (vote.value !== "undecided" && vote.status === "unchain") {
-            unchained.push(`${council[vote.votedBy]} voted ${vote.value} but did not chain the vote`);
-          }
-        });
-
-        let unchainedList = '';
-          if (unchained.length > 0) {
-          unchained.forEach((warning) => {
-            unchainedList += `${warning}\n`
-          });
-        }
-                
-        //proposals += `<b><u>Council Votes</u></b>\n&#9989;  Support - <b>${support}</b>\n&#10060;  Reject - <b>${reject}</b>\n&#128280;  Abstain - <b>${abstention}</b>\n&#9888;  Undecided - <b>${undecided}</b>\n\n`;
-        let voting_status = `✅  Support - **${support}**\n❌  Reject - **${reject}**\n🔘  Abstain - **${abstention}**\n⚠  Undecided - **${undecided}**\n`;
-        
-        //proposals += `<i><a href='https://www.cyberrepublic.org/proposals/${item._id}'>View on Cyber Republic website</a></i>`;
-        embed.addField('__Council Votes__',voting_status);
-        
-        if (unchained.length > 0) {
-          embed.addField('⚠ __Warnings__ ⚠',unchainedList+'\n\u200b');
-        } else {
-          embed.addField('\u200b','\u200b');
-        }
-        //}
-      });
-      //message.channel.send(proposals);
-    } else {
-      embed.addField("There are currently no proposals in the council voting period", "\u200b");
-      //message.channel.send(proposals);
-    }
-    
-    embed.setTimestamp();
-    embed.setFooter(footer_text, footer_img);
-    
-    message.channel.send({ embeds: [embed] });
   }
-});
+});*/
 
 // Automated check
 let storedAlerts = {};
@@ -301,6 +327,7 @@ client.on('ready', () => {
       const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
       const height = await block.json();
       
+      let loop_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
       //console.log('height.Result - ' + height.Result);
       
       const active = proposalList.data.list.filter((item) => {
@@ -404,7 +431,7 @@ client.on('ready', () => {
           .setTitle(item.title)
           .setURL(`https://www.cyberrepublic.org/proposals/${item._id}`)
           //.setDescription(description)
-          .addField(description, "\u200b")
+          .addField(description, `__**Proposed by**__: ${item.proposedBy}`)
           .addField("__Current voting status__", voting_status);
           if (show_unchained) embed.addField("__Warnings__", unchainedList+'\u200b');
           if (show_undecided) embed.addField("__Council members who have not yet voted__", undecidedList+'\u200b');
@@ -412,7 +439,9 @@ client.on('ready', () => {
           embed.setTimestamp();
           embed.setFooter(footer_text, footer_img);
           
-          message.channel.send({ embeds: [embed] });
+          //message.channel.send({ embeds: [embed] });
+          client.channels.cache.get(channel_id).send({ embeds: [embed] });
+          console.log(`${loop_date} Loop - Automatic proposal message sent`);
         });
       } else {
         // Send embeded message
@@ -427,6 +456,7 @@ client.on('ready', () => {
         
         // disabled upon request 30.12.2021
         //client.channels.cache.get(channel_id).send({ embeds: [embed] });
+        console.log(`${loop_date} Loop - No proposals active`);
       }
       
     }, check_interval);
