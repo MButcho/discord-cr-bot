@@ -55,8 +55,8 @@ client.on('messageCreate', async (message) => {
   // get date&time in nice format
   let command_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')+" UTC";
     
-  // /halving command
-  if(message.content.toLowerCase().includes('/ping')) {
+  // /ping command
+  if(message.content.toLowerCase().startsWith('/ping') || message.content.toLowerCase().startsWith('!ping')) {
     console.log(`Ping Command Triggered ${command_date}`);
     
     // Send embeded message
@@ -75,7 +75,7 @@ client.on('messageCreate', async (message) => {
   }
   
   // /halving command
-  if(message.content.toLowerCase().includes('/halving')) {
+  if(message.content.toLowerCase().startsWith('/halving') || message.content.toLowerCase().startsWith('!halving')) {
     //console.log(`Halving Command Triggered ${Date()}`);
     console.log(`Halving Command Triggered ${command_date}`);
     
@@ -108,7 +108,7 @@ client.on('messageCreate', async (message) => {
   }
   
   // /election command
-  if(message.content.toLowerCase().includes('/election')) {
+  if(message.content.toLowerCase().startsWith('/election') || message.content.toLowerCase().startsWith('!election')) {
     console.log(`Election Command Triggered ${command_date}`);
     
     const electionClose = 921730;
@@ -199,7 +199,8 @@ client.on('messageCreate', async (message) => {
   }*/
   
   // /proposals command
-  if(message.content.toLowerCase().includes('/proposals')) {
+  if(message.content.toLowerCase().startsWith('/proposals') || message.content.toLowerCase().startsWith('!proposals')) {
+  //if(message.content.toLowerCase().includes('/proposals')) {
     console.log(`Proposals Command Triggered ${command_date}`);
     
     const res = await fetch("https://api.cyberrepublic.org/api/cvote/list_public?voteResult=all");
