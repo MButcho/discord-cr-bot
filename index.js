@@ -9,7 +9,7 @@ if (ver) check_mins = 1;
 let check_interval = check_mins * 60 * 1000;
 
 // Bot start date
-let start_date = '';
+let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')+" UTC";
 
 // Create a new client instance
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]});
@@ -37,10 +37,7 @@ const footer_img = 'https://i.postimg.cc/Yq1g9cWv/avatar.png';
 
 // When the client is ready, run this code (only once)
 client.once('ready', () => {
-  console.log(`Logged in as ${client.user.tag}`);
-  var d = new Date();
-  d = new Date(d.getTime() - 3000000);
-  start_date = d.getFullYear().toString()+"-"+((d.getMonth()+1).toString().length==2?(d.getMonth()+1).toString():"0"+(d.getMonth()+1).toString())+"-"+(d.getDate().toString().length==2?d.getDate().toString():"0"+d.getDate().toString())+" "+(d.getHours().toString().length==2?d.getHours().toString():"0"+d.getHours().toString())+":"+((parseInt(d.getMinutes()/5)*5).toString().length==2?(parseInt(d.getMinutes()/5)*5).toString():"0"+(parseInt(d.getMinutes()/5)*5).toString())+":00 UTC";
+  console.log(`Logged in as ${client.user.tag} on ${start_date}`);
   /*const embed = new MessageEmbed()
   .setColor(0x5BFFD0)
   .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
@@ -56,13 +53,16 @@ client.once('ready', () => {
 
 client.on('messageCreate', async (message) => {
   // get date&time in nice format
-  var d = new Date();
+  /*var d = new Date();
   d = new Date(d.getTime() - 3000000);
-  var date_now = d.getFullYear().toString()+"-"+((d.getMonth()+1).toString().length==2?(d.getMonth()+1).toString():"0"+(d.getMonth()+1).toString())+"-"+(d.getDate().toString().length==2?d.getDate().toString():"0"+d.getDate().toString())+" "+(d.getHours().toString().length==2?d.getHours().toString():"0"+d.getHours().toString())+":"+((parseInt(d.getMinutes()/5)*5).toString().length==2?(parseInt(d.getMinutes()/5)*5).toString():"0"+(parseInt(d.getMinutes()/5)*5).toString())+":00 UTC";
+  var date_now = d.getFullYear().toString()+"-"+((d.getMonth()+1).toString().length==2?(d.getMonth()+1).toString():"0"+(d.getMonth()+1).toString())+"-"+(d.getDate().toString().length==2?d.getDate().toString():"0"+d.getDate().toString())+" "+(d.getHours().toString().length==2?d.getHours().toString():"0"+d.getHours().toString())+":"+((parseInt(d.getMinutes()/5)*5).toString().length==2?(parseInt(d.getMinutes()/5)*5).toString():"0"+(parseInt(d.getMinutes()/5)*5).toString())+":00 UTC";*/
+  
+  let command_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')+" UTC";
+  
   
   // /halving command
   if(message.content.toLowerCase().includes('/ping')) {
-    console.log(`Ping Command Triggered ${date_now}`);
+    console.log(`Ping Command Triggered ${command_date}`);
     
     // Send embeded message
     const embed = new MessageEmbed()
@@ -82,7 +82,7 @@ client.on('messageCreate', async (message) => {
   // /halving command
   if(message.content.toLowerCase().includes('/halving')) {
     //console.log(`Halving Command Triggered ${Date()}`);
-    console.log(`Halving Command Triggered ${date_now}`);
+    console.log(`Halving Command Triggered ${command_date}`);
     
     const halvingBlocks = 1051200;
     const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
@@ -114,7 +114,7 @@ client.on('messageCreate', async (message) => {
   
   // /election command
   if(message.content.toLowerCase().includes('/election')) {
-    console.log(`Election Command Triggered ${date_now}`);
+    console.log(`Election Command Triggered ${command_date}`);
     
     const electionClose = 921730;
     const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
@@ -168,7 +168,7 @@ client.on('messageCreate', async (message) => {
   
   // council command
   /*if(message.content.toLowerCase().includes('/council')) {
-    console.log(`Council Command Triggered ${date_now}`);
+    console.log(`Council Command Triggered ${command_date}`);
 
     const headers = {
       "content-type": "application/json;",
@@ -205,7 +205,7 @@ client.on('messageCreate', async (message) => {
   
   // /proposals command
   if(message.content.toLowerCase().includes('/proposals')) {
-    console.log(`Proposals Command Triggered ${date_now}`);
+    console.log(`Proposals Command Triggered ${command_date}`);
     
     const res = await fetch("https://api.cyberrepublic.org/api/cvote/list_public?voteResult=all");
     const proposalList = await res.json();
