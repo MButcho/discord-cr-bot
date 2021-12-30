@@ -396,6 +396,7 @@ client.on('ready', () => {
         embed.setTimestamp();
         embed.setFooter(footer_text, footer_img);
         
+        // disabled upon request 30.12.2021
         //client.channels.cache.get(channel_id).send({ embeds: [embed] });
       }
       
