@@ -51,14 +51,15 @@ client.once('ready', () => {
   //channel.send('Such language is prohibited!');*/
 });
 
-client.on('messageCreate', async (message) => {
-  // get date&time in nice format
+client.on('interactionCreate', async interaction => {
+	if (!interaction.isCommand()) return;
+  
+  // get date&time
   let command_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')+" UTC";
-    
-  // /ping command
-  if(message.content.toLowerCase().startsWith('/ping') || message.content.toLowerCase().startsWith('!ping')) {
-    console.log(`Ping Command Triggered ${command_date}`);
-    
+
+	const { commandName } = interaction;
+
+	if (commandName === 'ping-cr-bot') {
     // Send embeded message
     const embed = new MessageEmbed()
     .setColor(0x5BFFD0)
@@ -68,15 +69,11 @@ client.on('messageCreate', async (message) => {
     .addField(`I am up and running since ${start_date}`, '\u200b')
     embed.setTimestamp();
     embed.setFooter(footer_text, footer_img);
-    embed.setFooter(footer_text, footer_img);
     
-    message.channel.send({ embeds: [embed] });
-    //client.channels.cache.get(channel_id).send({ embeds: [embed] });
-  }
-  
-  // /halving command
-  if(message.content.toLowerCase().startsWith('/halving') || message.content.toLowerCase().startsWith('!halving')) {
-    //console.log(`Halving Command Triggered ${Date()}`);
+		await interaction.reply({ embeds: [embed] });
+    console.log(`Ping Command Triggered ${command_date}`);
+      
+	} else if (commandName === 'halving') {
     console.log(`Halving Command Triggered ${command_date}`);
     
     const halvingBlocks = 1051200;
@@ -103,13 +100,9 @@ client.on('messageCreate', async (message) => {
     embed.setTimestamp();
     embed.setFooter(footer_text, footer_img);
     
-    message.channel.send({ embeds: [embed] });
-    //client.channels.cache.get(channel_id).send({ embeds: [embed] });
-  }
-  
-  // /election command
-  if(message.content.toLowerCase().startsWith('/election') || message.content.toLowerCase().startsWith('!election')) {
-    console.log(`Election Command Triggered ${command_date}`);
+    await interaction.reply({ embeds: [embed] });
+	} else if (commandName === 'election') {
+		console.log(`Election Command Triggered ${command_date}`);
     
     const electionClose = 921730;
     const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
@@ -158,49 +151,9 @@ client.on('messageCreate', async (message) => {
     .addField('Election Closed', `${days} days, ${hours} hours, ${minutes} minutes`);
     embed.setTimestamp();
     embed.setFooter(footer_text, footer_img);
-    message.channel.send({ embeds: [embed] });
-  }
-  
-  // council command
-  /*if(message.content.toLowerCase().includes('/council')) {
-    console.log(`Council Command Triggered ${command_date}`);
-
-    const headers = {
-      "content-type": "application/json;",
-    };
-    const dataString = '{"method": "listcurrentcrs","params":{"state":"all"}}';
-    const options = {
-      url: "http://localhost:20336/",
-      method: "POST",
-      headers: headers,
-      body: dataString,
-      auth: {
-        user: "9b9182c7fb49418fa36f0c8100a555e0",
-        pass: "5e946b99ac9f64b09328ceeb715d732a",
-      },
-    };
-
-    function callback(error, response, body) {
-      if (!error && response.statusCode == 200) {
-        let list = JSON.parse(body);
-        list = list.error.message.crmembersinfo;
-
-        let council = "<b>Cyber Republic Council Incumbents</b>" + "\n" + "\n";
-        list.forEach((member) => {
-          council = council + `${member.nickname}  --  ${member.state}` + "\n";
-        });
-        council =
-          council +
-          `\nDisplays the active council. Will update once the election closes. Use /election for current status.`;
-        bot.sendMessage(chatId, council, { parse_mode: "HTML" });
-      }
-    }
-    request(options, callback);
-  }*/
-  
-  // /proposals command
-  if(message.content.toLowerCase().startsWith('/proposals') || message.content.toLowerCase().startsWith('!proposals')) {
-  //if(message.content.toLowerCase().includes('/proposals')) {
+    
+    await interaction.reply({ embeds: [embed] });
+	} else if (commandName === 'proposals') {
     console.log(`Proposals Command Triggered ${command_date}`);
     
     const res = await fetch("https://api.cyberrepublic.org/api/cvote/list_public?voteResult=all");
@@ -210,8 +163,8 @@ client.on('messageCreate', async (message) => {
     const height = await block.json();
 
     const active = proposalList.data.list.filter((item) => {
-      return item.proposedEndsHeight > height.Result && item.status === "PROPOSED";
-      //return item.proposedEndsHeight < height.Result && item.status === "ACTIVE"; // test
+      //return item.proposedEndsHeight > height.Result && item.status === "PROPOSED";
+      return item.proposedEndsHeight < height.Result && item.status === "ACTIVE"; // test
     });
     
     const embed = new MessageEmbed()
@@ -226,7 +179,6 @@ client.on('messageCreate', async (message) => {
       active.reverse().forEach((item, index) => {
         index++;
         
-        //if(index > 15) {
         const secondsRemaining =
           parseFloat(item.proposedEndsHeight) - parseFloat(height.Result) < 0
             ? 0
@@ -235,7 +187,6 @@ client.on('messageCreate', async (message) => {
         const hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
         const minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
 
-        //embed.addField(`${index}. ${item.title}`, `Proposed by - **${item.proposedBy}**\n**Time remaining** - ${days} days, ${hours} hours, ${minutes} minutes\n\u200b`)
         embed.addField(`${index}. ${item.title}`, `Proposed by - ${item.proposedBy}\n**__Time remaining__** - ${days} days, ${hours} hours, ${minutes} minutes\n`)
     
         let support = 0;
@@ -272,19 +223,76 @@ client.on('messageCreate', async (message) => {
         } else {
           embed.addField('\u200b','\u200b');
         }
-        //}
       });
-      //message.channel.send(proposals);
     } else {
       embed.addField("There are currently no proposals in the council voting period", "\u200b");
-      //message.channel.send(proposals);
     }
     
     embed.setTimestamp();
     embed.setFooter(footer_text, footer_img);
     
+		await interaction.reply({ embeds: [embed] });
+	}
+});
+
+client.on('messageCreate', async (message) => {
+  // get date&time
+  //let command_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')+" UTC";
+    
+  // old /ping command
+  /*if(message.content.toLowerCase().startsWith('/ping') || message.content.toLowerCase().startsWith('!ping')) {
+    console.log(`Ping Command Triggered ${command_date}`);
+    
+    // Send embeded message
+    const embed = new MessageEmbed()
+    .setColor(0x5BFFD0)
+    .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
+    .setTitle('Cyber Republic - Proposals')
+    .setURL('https://www.cyberrepublic.org/proposals')
+    .addField(`I am up and running since ${start_date}`, '\u200b')
+    embed.setTimestamp();
+    embed.setFooter(footer_text, footer_img);
+    
     message.channel.send({ embeds: [embed] });
-  }
+    //client.channels.cache.get(channel_id).send({ embeds: [embed] });
+  }*/
+    
+  // old council command
+  /*if(message.content.toLowerCase().includes('/council')) {
+    console.log(`Council Command Triggered ${command_date}`);
+
+    const headers = {
+      "content-type": "application/json;",
+    };
+    const dataString = '{"method": "listcurrentcrs","params":{"state":"all"}}';
+    const options = {
+      url: "http://localhost:20336/",
+      method: "POST",
+      headers: headers,
+      body: dataString,
+      auth: {
+        user: "9b9182c7fb49418fa36f0c8100a555e0",
+        pass: "5e946b99ac9f64b09328ceeb715d732a",
+      },
+    };
+
+    function callback(error, response, body) {
+      if (!error && response.statusCode == 200) {
+        let list = JSON.parse(body);
+        list = list.error.message.crmembersinfo;
+
+        let council = "<b>Cyber Republic Council Incumbents</b>" + "\n" + "\n";
+        list.forEach((member) => {
+          council = council + `${member.nickname}  --  ${member.state}` + "\n";
+        });
+        council =
+          council +
+          `\nDisplays the active council. Will update once the election closes. Use /election for current status.`;
+        bot.sendMessage(chatId, council, { parse_mode: "HTML" });
+      }
+    }
+    request(options, callback);
+  }*/
 });
 
 // Automated check
