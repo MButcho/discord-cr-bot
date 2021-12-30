@@ -396,7 +396,7 @@ client.on('ready', () => {
         embed.setTimestamp();
         embed.setFooter(footer_text, footer_img);
         
-        client.channels.cache.get(channel_id).send({ embeds: [embed] });
+        //client.channels.cache.get(channel_id).send({ embeds: [embed] });
       }
       
     }, check_interval);
