@@ -43,7 +43,7 @@ client.once('ready', () => {
   .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
   .setTitle('Cyber Republic - Proposals')
   .setURL('https://www.cyberrepublic.org/proposals')
-  .addField("I am up and running!", "\u200b")
+  .addField(`I am up and running since ${start_date}`, "\u200b")
   embed.setTimestamp();
   embed.setFooter(footer_text, footer_img);
   //client.channels.cache.get(channel_id).send('I am up and running!');
