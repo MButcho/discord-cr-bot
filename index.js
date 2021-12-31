@@ -9,7 +9,7 @@ if (dev) check_mins = 5;
 let check_interval = check_mins * 60 * 1000;
 
 // current version
-const ver = "v1.3.1";
+const ver = "v1.3.2";
 
 // Bot start date
 let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
@@ -41,7 +41,7 @@ const footer_img = 'https://i.postimg.cc/Yq1g9cWv/avatar.png';
 
 // When the client is ready
 client.once('ready', () => {
-  console.log(`${start_date} Logged in as ${client.user.tag}`);
+  console.log(`${start_date} Logged in as ${client.user.tag} on ${ver}`);
 });
 
 // Run commands
@@ -57,6 +57,7 @@ client.on('interactionCreate', async interaction => {
 
   if (commandName === 'ping-cr-bot') {
     console.log(`${command_date} Ping command triggered`);
+    await interaction.deferReply();
     
     let days = Math.floor(seconds_since_start / (60 * 60 * 24));
     let hours = Math.floor((seconds_since_start % (60 * 60 * 24)) / (60 * 60));
@@ -76,14 +77,16 @@ client.on('interactionCreate', async interaction => {
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Cyber Republic - Proposals')
     .setURL('https://www.cyberrepublic.org/proposals')
-    .addField(`I am up and running version ${ver}:`, `${days} days, ${hours} hours, ${minutes} minutes\n\n**Next automatic proposals check:** ${next_loop_mins}:${next_loop_secs} mins\n\n**Bot start:** ${start_date} UTC\n\u200b`)
+    .addField(`I am up and running on ${ver}:`, `${days} days, ${hours} hours, ${minutes} minutes\n\n**Next automatic proposals check:** ${next_loop_mins}:${next_loop_secs} mins\n\n**Bot start:** ${start_date} UTC\n\u200b`)
     embed.setTimestamp();
     embed.setFooter(footer_text, footer_img);
     
-    await interaction.reply({ embeds: [embed] });
+    //await interaction.reply({ embeds: [embed] });
+    interaction.editReply({ embeds: [embed] });
       
   } else if (commandName === 'halving') {
     console.log(`${command_date} Halving command triggered`);
+    await interaction.deferReply();
     
     const halvingBlocks = 1051200;
     const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
@@ -109,10 +112,12 @@ client.on('interactionCreate', async interaction => {
     embed.setTimestamp();
     embed.setFooter(footer_text, footer_img);
     
-    await interaction.reply({ embeds: [embed] });
+    //await interaction.reply({ embeds: [embed] });
+    interaction.editReply({ embeds: [embed] });
     
   } else if (commandName === 'election') {
     console.log(`${command_date} Election command triggered`);
+    await interaction.deferReply();
     
     const electionClose = 921730;
     const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
@@ -162,11 +167,12 @@ client.on('interactionCreate', async interaction => {
     embed.setTimestamp();
     embed.setFooter(footer_text, footer_img);
     
-    await interaction.reply({ embeds: [embed] });
+    //await interaction.reply({ embeds: [embed] });
+    interaction.editReply({ embeds: [embed] });
     
   } else if (commandName === 'proposals') {
-    await interaction.deferReply();
     console.log(`${command_date} Proposals command triggered`);
+    await interaction.deferReply();
     
     const res = await fetch("https://api.cyberrepublic.org/api/cvote/list_public?voteResult=all");
     const proposalList = await res.json();
