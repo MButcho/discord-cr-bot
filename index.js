@@ -1,12 +1,15 @@
 // Require the necessary discord.js classes
 const { Client, Intents, MessageEmbed, TextChannel } = require('discord.js');
-const { token, ver } = require('./config.json');
+const { token, dev } = require('./config.json');
 const request = require('request');
 const fetch = require('node-fetch');
 let loop = false;
-let check_mins = 100;
-if (ver) check_mins = 10;
+let check_mins = 5;
+if (dev) check_mins = 5;
 let check_interval = check_mins * 60 * 1000;
+
+// current version
+const ver = "v1.3.1";
 
 // Bot start date
 let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
@@ -15,7 +18,7 @@ let start_date_raw = new Date();
 // Create a new client instance
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]});
 let channel_id = '917029748192985139'; // Elastos Discord #🌎┃cyber-republic-dao
-if (ver) channel_id = '920225673887494157'; // MB Test server #general
+if (dev) channel_id = '920225673887494157'; // MB Test server #general
 
 // Basic variables
 const council = {
@@ -36,22 +39,12 @@ const council = {
 const footer_text = 'Support bot creator with ELA donation to EUSMsck3svNiacva9LfwrLfbvNnUU27z77';
 const footer_img = 'https://i.postimg.cc/Yq1g9cWv/avatar.png';
 
-// When the client is ready, run this code (only once)
+// When the client is ready
 client.once('ready', () => {
   console.log(`${start_date} Logged in as ${client.user.tag}`);
-  /*const embed = new MessageEmbed()
-  .setColor(0x5BFFD0)
-  .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
-  .setTitle('Cyber Republic - Proposals')
-  .setURL('https://www.cyberrepublic.org/proposals')
-  .addField(`I am up and running since ${start_date} UTC`, "\u200b")
-  embed.setTimestamp();
-  embed.setFooter(footer_text, footer_img);
-  //client.channels.cache.get(channel_id).send('I am up and running!');
-  client.channels.cache.get(channel_id).send({ embeds: [embed] });
-  //channel.send('Such language is prohibited!');*/
 });
 
+// Run commands
 client.on('interactionCreate', async interaction => {
   if (!interaction.isCommand()) return;
   
@@ -69,12 +62,13 @@ client.on('interactionCreate', async interaction => {
     let hours = Math.floor((seconds_since_start % (60 * 60 * 24)) / (60 * 60));
     let minutes = Math.floor((seconds_since_start % (60 * 60)) / 60);
     
-    // Get next halving block
-    //let halvingBlock = halvingBlocks*(Math.trunc(parseInt(height.Result)/halvingBlocks)+1);
-    //let next_check_mins = check_mins*(Math.trunc(parseInt(seconds_since_start)/check_mins)+1);
-    let next_check_round = Math.trunc((parseInt(seconds_since_start)/60)/check_mins)+1;
-    
-    let next_check_mins = ((check_mins*next_check_round)-(seconds_since_start/60)).toFixed(2);
+    // calculate next loop run
+    let next_loop_round = Math.trunc((parseInt(seconds_since_start)/60)/check_mins)+1;
+    let next_loop_raw = ((check_mins*next_loop_round)-(seconds_since_start/60)).toFixed(2);
+    let next_loop_mins = Math.floor(next_loop_raw);
+    let next_loop_secs = Math.floor((next_loop_raw - next_loop_mins)*60).toString();
+    // add leading 0
+    if (next_loop_secs.length === 1) next_loop_secs = "0"+next_loop_secs;
     
     // Send embeded message
     const embed = new MessageEmbed()
@@ -82,7 +76,7 @@ client.on('interactionCreate', async interaction => {
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Cyber Republic - Proposals')
     .setURL('https://www.cyberrepublic.org/proposals')
-    .addField(`I am up and running:`, `${days} days, ${hours} hours, ${minutes} minutes\n\n**Next automatic proposals check:** ${next_check_mins} mins\n\n**Bot start:** ${start_date} UTC\n\u200b`)
+    .addField(`I am up and running version ${ver}:`, `${days} days, ${hours} hours, ${minutes} minutes\n\n**Next automatic proposals check:** ${next_loop_mins}:${next_loop_secs} mins\n\n**Bot start:** ${start_date} UTC\n\u200b`)
     embed.setTimestamp();
     embed.setFooter(footer_text, footer_img);
     
@@ -253,6 +247,7 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
+// Respond to messages
 /*client.on('messageCreate', async (message) => {
   // get date&time
   //let command_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
@@ -328,6 +323,7 @@ client.on('ready', () => {
       const height = await block.json();
       
       let loop_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+      //console.log(`${loop_date} Loop - Started`);
       //console.log('height.Result - ' + height.Result);
       
       const active = proposalList.data.list.filter((item) => {
@@ -441,6 +437,7 @@ client.on('ready', () => {
           
           //message.channel.send({ embeds: [embed] });
           client.channels.cache.get(channel_id).send({ embeds: [embed] });
+          loop_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
           console.log(`${loop_date} Loop - Automatic proposal message sent`);
         });
       } else {
@@ -458,7 +455,8 @@ client.on('ready', () => {
         //client.channels.cache.get(channel_id).send({ embeds: [embed] });
         console.log(`${loop_date} Loop - No proposals active`);
       }
-      
+      //loop_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+      //console.log(`${loop_date} Loop - Finished`);
     }, check_interval);
   } else {
     console.log('Loop already running');
