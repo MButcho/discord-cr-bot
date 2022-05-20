@@ -9,7 +9,7 @@ if (dev) check_mins = 5;
 let check_interval = check_mins * 60 * 1000;
 
 // current version
-const ver = "v1.3.2";
+const ver = "v1.3.3";
 
 // Bot start date
 let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
@@ -79,7 +79,7 @@ client.on('interactionCreate', async interaction => {
     .setURL('https://www.cyberrepublic.org/proposals')
     .addField(`I am up and running on ${ver}:`, `${days} days, ${hours} hours, ${minutes} minutes\n\n**Next automatic proposals check:** ${next_loop_mins}:${next_loop_secs} mins\n\n**Bot start:** ${start_date} UTC\n\u200b`)
     embed.setTimestamp();
-    embed.setFooter(footer_text, footer_img);
+    embed.setFooter({text: footer_text, iconURL: footer_img});
     
     //await interaction.reply({ embeds: [embed] });
     interaction.editReply({ embeds: [embed] });
@@ -110,7 +110,7 @@ client.on('interactionCreate', async interaction => {
     .setURL('https://www.cyberrepublic.org/proposals/5fe404ea7b3b430078ea4866')
     .addField('Elastos Halving Countdown', `${days} days, ${hours} hours, ${minutes} minutes`)
     embed.setTimestamp();
-    embed.setFooter(footer_text, footer_img);
+    embed.setFooter({text: footer_text, iconURL: footer_img});
     
     //await interaction.reply({ embeds: [embed] });
     interaction.editReply({ embeds: [embed] });
@@ -119,17 +119,27 @@ client.on('interactionCreate', async interaction => {
     console.log(`${command_date} Election command triggered`);
     await interaction.deferReply();
     
-    const electionClose = 921730;
+    const councilTerm = 262800;
+    const firstCouncil = 658930;
+    const electionPeriod = 21600;
     const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
     const height = await block.json();
+    const block_height = parseInt(height.Result);
+    // const block_height = 1184531;
+    
+    // Get election dates
+    const electionClose = parseInt(firstCouncil)+(councilTerm*(Math.trunc((block_height-parseInt(firstCouncil))/parseInt(councilTerm))+1));
 
-    const blocksToGo = electionClose - parseInt(height.Result);
+    let blocksToGo = electionClose - block_height;
+    if (blocksToGo > electionPeriod) {
+      blocksToGo = electionClose - block_height - electionPeriod;
+    }
     const secondsRemaining = blocksToGo < 0 ? 0 : blocksToGo * 2 * 60;
     let days = Math.floor(secondsRemaining / (60 * 60 * 24));
     let hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
     let minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
     let seconds = Math.floor(secondsRemaining % 60);
-
+    
     const crc = await fetch("https://node1.elaphant.app/api/v1/crc/rank/height/9999999999999?state=active");
     const res = await crc.json();
 
@@ -162,10 +172,15 @@ client.on('interactionCreate', async interaction => {
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Cyber Republic Council')
     .setURL('https://www.cyberrepublic.org/council')
-    .addField('Election Status', ranks)
-    .addField('Election Closed', `${days} days, ${hours} hours, ${minutes} minutes`);
+    .addField('Election Status', ranks);
+    if (blocksToGo < electionPeriod) {
+      embed.addField('Election in progress and concludes in', `${days} days, ${hours} hours, ${minutes} minutes`);
+    } else {
+      embed.addField('Next election starts in', `${days} days, ${hours} hours, ${minutes} minutes`);
+    }
+    
     embed.setTimestamp();
-    embed.setFooter(footer_text, footer_img);
+    embed.setFooter({text: footer_text, iconURL: footer_img});
     
     //await interaction.reply({ embeds: [embed] });
     interaction.editReply({ embeds: [embed] });
@@ -246,7 +261,8 @@ client.on('interactionCreate', async interaction => {
     }
     
     embed.setTimestamp();
-    embed.setFooter(footer_text, footer_img);
+    embed.setFooter({text: footer_text, iconURL: footer_img});
+    //embed.setFooter(footer_text, footer_img);
     
 		//await interaction.reply({ embeds: [embed] });
 		interaction.editReply({ embeds: [embed] });
@@ -270,7 +286,7 @@ client.on('interactionCreate', async interaction => {
     .setURL('https://www.cyberrepublic.org/proposals')
     .addField(`I am up and running since ${start_date} UTC`, '\u200b')
     embed.setTimestamp();
-    embed.setFooter(footer_text, footer_img);
+    embed.setFooter({text: footer_text, iconURL: footer_img});
     
     message.channel.send({ embeds: [embed] });
     //client.channels.cache.get(channel_id).send({ embeds: [embed] });
@@ -439,7 +455,7 @@ client.on('ready', () => {
           if (show_undecided) embed.addField("__Council members who have not yet voted__", undecidedList+'\u200b');
           if (show_failed) embed.addField("__Council members who failed to vote__", failedList+'\u200b');
           embed.setTimestamp();
-          embed.setFooter(footer_text, footer_img);
+          embed.setFooter({text: footer_text, iconURL: footer_img});
           
           //message.channel.send({ embeds: [embed] });
           client.channels.cache.get(channel_id).send({ embeds: [embed] });
@@ -455,7 +471,7 @@ client.on('ready', () => {
         .setURL('https://www.cyberrepublic.org/proposals')
         .addField("There are currently no proposals in the council voting period", "\u200b")
         embed.setTimestamp();
-        embed.setFooter(footer_text, footer_img);
+        embed.setFooter({text: footer_text, iconURL: footer_img});
         
         // disabled upon request 30.12.2021
         //client.channels.cache.get(channel_id).send({ embeds: [embed] });
