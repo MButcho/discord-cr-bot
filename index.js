@@ -9,7 +9,7 @@ if (dev) check_mins = 5;
 let check_interval = check_mins * 60 * 1000;
 
 // current version
-const ver = "v1.3.3";
+const ver = "v1.3.4";
 
 // Bot start date
 let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
