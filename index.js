@@ -1,6 +1,7 @@
 // Require the necessary discord.js classes
 const { Client, Intents, MessageEmbed, TextChannel } = require('discord.js');
 const { token, dev } = require('./config.json');
+const codes = require('./codes.json');
 const request = require('request');
 const fetch = require('node-fetch');
 let loop = false;
@@ -9,7 +10,7 @@ if (dev) check_mins = 5;
 let check_interval = check_mins * 60 * 1000;
 
 // current version
-const ver = "v1.3.4";
+const ver = "v1.3.5";
 
 // Bot start date
 let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
@@ -125,7 +126,8 @@ client.on('interactionCreate', async interaction => {
     const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
     const height = await block.json();
     const block_height = parseInt(height.Result);
-    // const block_height = 1184531;
+    // const block_height = 1184531;   
+    
     
     // Get election dates
     const electionClose = parseInt(firstCouncil)+(councilTerm*(Math.trunc((block_height-parseInt(firstCouncil))/parseInt(councilTerm))+1));
@@ -148,12 +150,14 @@ client.on('interactionCreate', async interaction => {
 
     res.result.forEach((candidate) => {
       // ranks = ranks + "{0:<20} {1}".format(key, value) + "\n"
+      let output = codes.filter(a => a.code == candidate.Location);      
+      
       ranks =
         ranks +
-        `${candidate.Rank}. ${candidate.Nickname}  --  ${parseFloat(candidate.Votes).toLocaleString("en", {
+        `**${candidate.Rank}.** ${candidate.Nickname} (${output[0].name}) *[web](${candidate.Url})* -- **${parseFloat(candidate.Votes).toLocaleString("en", {
           minimumFractionDigits: 0,
           maximumFractionDigits: 0,
-        })}` +
+        })}**` +
         "\n";
 
       if (candidate.Rank === 12) {
@@ -175,10 +179,10 @@ client.on('interactionCreate', async interaction => {
     .setURL('https://www.cyberrepublic.org/council')
     .addField('Election Status', ranks);
     if (blocksToGo < electionPeriod) {
-      embed.addField('CR Council election in progress', `**Start:** Block height **`+new Intl.NumberFormat().format(electionStart)+`**\n**Current:** Block height **`+new Intl.NumberFormat().format(block_height)+`**\n**End:** Block height **`+new Intl.NumberFormat().format(electionClose)+`**\n**End in:** ${days} days, ${hours} hours, ${minutes} minutes\n`);
+      embed.addField('CR Council election in progress', `**Start:** Block height -- **`+new Intl.NumberFormat('en-US').format(electionStart)+`**\n**Current:** Block height -- **`+new Intl.NumberFormat('en-US').format(block_height)+`**\n**End:** Block height -- **`+new Intl.NumberFormat('en-US').format(electionClose)+`**\n**End in:** ${days} days, ${hours} hours, ${minutes} minutes\n`);
       
     } else {
-      embed.addField('Next CR Council election', `**Start:** Block height **`+new Intl.NumberFormat().format(electionStart)+`**\n**Current:** Block height **`+new Intl.NumberFormat().format(block_height)+`**\n**Start in:** ${days} days, ${hours} hours, ${minutes} minutes\n`);
+      embed.addField('Next CR Council election', `**Start:** Block height -- **`+new Intl.NumberFormat('en-US').format(electionStart)+`**\n**Current:** Block height -- **`+new Intl.NumberFormat('en-US').format(block_height)+`**\n**Start in:** ${days} days, ${hours} hours, ${minutes} minutes\n`);
     }
         
     embed.setTimestamp();
