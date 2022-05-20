@@ -136,6 +136,9 @@ client.on('interactionCreate', async interaction => {
     let blocksToGo = electionClose - block_height;
     if (blocksToGo > electionPeriod) {
       blocksToGo = electionClose - block_height - electionPeriod;
+      electionStatus = "Election Results";
+    } else {
+      electionStatus = "Election Status";
     }
     const secondsRemaining = blocksToGo < 0 ? 0 : blocksToGo * 2 * 60;
     let days = Math.floor(secondsRemaining / (60 * 60 * 24));
@@ -147,23 +150,25 @@ client.on('interactionCreate', async interaction => {
     const res = await crc.json();
 
     let ranks = '';
+    let totalVotes = 0;
 
     res.result.forEach((candidate) => {
       // ranks = ranks + "{0:<20} {1}".format(key, value) + "\n"
       let output = codes.filter(a => a.code == candidate.Location);      
       
-      ranks =
-        ranks +
-        `**${candidate.Rank}.** ${candidate.Nickname} (${output[0].name}) *[web](${candidate.Url})* -- **${parseFloat(candidate.Votes).toLocaleString("en", {
+      ranks += `**${candidate.Rank}.** ${candidate.Nickname} (${output[0].name}) *[web](${candidate.Url})* -- **${parseFloat(candidate.Votes).toLocaleString("en", {
           minimumFractionDigits: 0,
           maximumFractionDigits: 0,
         })}**` +
         "\n";
-
+      
+      totalVotes += parseFloat(candidate.Votes);
       if (candidate.Rank === 12) {
         ranks = ranks + "\n";
       }
     });
+    
+    ranks += `\n***Total ELA voted -- ${new Intl.NumberFormat('en-US').format(totalVotes)}***`;
 
     //ranks = ranks + `\n<b>Election close in ${blocksToGo} blocks</b>\n${days} days, ${hours} hours, ${minutes} minutes`;
     //ranks = ranks + `\n<b>Election closed</b>\n${days} days, ${hours} hours, ${minutes} minutes`;
@@ -177,12 +182,12 @@ client.on('interactionCreate', async interaction => {
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Cyber Republic Council')
     .setURL('https://www.cyberrepublic.org/council')
-    .addField('Election Status', ranks);
+    .addField(electionStatus, ranks);
     if (blocksToGo < electionPeriod) {
-      embed.addField('CR Council election in progress', `**Start:** Block height -- **`+new Intl.NumberFormat('en-US').format(electionStart)+`**\n**Current:** Block height -- **`+new Intl.NumberFormat('en-US').format(block_height)+`**\n**End:** Block height -- **`+new Intl.NumberFormat('en-US').format(electionClose)+`**\n**End in:** ${days} days, ${hours} hours, ${minutes} minutes\n`);
+      embed.addField('CR Council election in progress', `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(electionStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**End:** Block height -- **${new Intl.NumberFormat('en-US').format(electionClose)}**\n**End in:** ${days} days, ${hours} hours, ${minutes} minutes\n`);
       
     } else {
-      embed.addField('Next CR Council election', `**Start:** Block height -- **`+new Intl.NumberFormat('en-US').format(electionStart)+`**\n**Current:** Block height -- **`+new Intl.NumberFormat('en-US').format(block_height)+`**\n**Start in:** ${days} days, ${hours} hours, ${minutes} minutes\n`);
+      embed.addField('Next CR Council election', `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(electionStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**Start in:** ${days} days, ${hours} hours, ${minutes} minutes\n`);
     }
         
     embed.setTimestamp();
