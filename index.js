@@ -129,6 +129,7 @@ client.on('interactionCreate', async interaction => {
     
     // Get election dates
     const electionClose = parseInt(firstCouncil)+(councilTerm*(Math.trunc((block_height-parseInt(firstCouncil))/parseInt(councilTerm))+1));
+    const electionStart = electionClose - electionPeriod;
 
     let blocksToGo = electionClose - block_height;
     if (blocksToGo > electionPeriod) {
@@ -174,11 +175,12 @@ client.on('interactionCreate', async interaction => {
     .setURL('https://www.cyberrepublic.org/council')
     .addField('Election Status', ranks);
     if (blocksToGo < electionPeriod) {
-      embed.addField('Election in progress and concludes in', `${days} days, ${hours} hours, ${minutes} minutes`);
+      embed.addField('CR Council election in progress', `**Start:** Block height **`+new Intl.NumberFormat().format(electionStart)+`**\n**Current:** Block height **`+new Intl.NumberFormat().format(block_height)+`**\n**End:** Block height **`+new Intl.NumberFormat().format(electionClose)+`**\n**End in:** ${days} days, ${hours} hours, ${minutes} minutes\n`);
+      
     } else {
-      embed.addField('Next election starts in', `${days} days, ${hours} hours, ${minutes} minutes`);
+      embed.addField('Next CR Council election', `**Start:** Block height **`+new Intl.NumberFormat().format(electionStart)+`**\n**Current:** Block height **`+new Intl.NumberFormat().format(block_height)+`**\n**Start in:** ${days} days, ${hours} hours, ${minutes} minutes\n`);
     }
-    
+        
     embed.setTimestamp();
     embed.setFooter({text: footer_text, iconURL: footer_img});
     
