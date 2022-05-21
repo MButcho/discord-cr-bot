@@ -37,7 +37,7 @@ const council = {
   "5ee0d99f9e10fd007849e53e": "Orchard Trinity",
 };
 
-const footer_text = 'Support bot creator with ELA donation to EUSMsck3svNiacva9LfwrLfbvNnUU27z77';
+const footer_text = `Support CR Discord Bot ${ver} via donations to EUSMsck3svNiacva9LfwrLfbvNnUU27z77`;
 const footer_img = 'https://i.postimg.cc/Yq1g9cWv/avatar.png';
 
 // When the client is ready
@@ -78,7 +78,7 @@ client.on('interactionCreate', async interaction => {
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Cyber Republic - Proposals')
     .setURL('https://www.cyberrepublic.org/proposals')
-    .addField(`I am up and running on ${ver}:`, `${days} days, ${hours} hours, ${minutes} minutes\n\n**Next automatic proposals check:** ${next_loop_mins}:${next_loop_secs} mins\n\n**Bot start:** ${start_date} UTC\n\u200b`)
+    .addField(`Bot running for:`, `${days} days, ${hours} hours, ${minutes} minutes\n\n**Next automatic proposals check:** ${next_loop_mins}:${next_loop_secs} mins\n**Bot start:** ${start_date} UTC\n**Source code:** [CR Discord Bot ${ver}](https://github.com/MButcho/discord-cr-bot)\n\u200b`)
     embed.setTimestamp();
     embed.setFooter({text: footer_text, iconURL: footer_img});
     
