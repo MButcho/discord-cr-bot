@@ -10,7 +10,7 @@ if (dev) check_mins = 5;
 let check_interval = check_mins * 60 * 1000;
 
 // current version
-const ver = "v1.3.5";
+const ver = "v1.3.6";
 
 // Bot start date
 let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
@@ -150,25 +150,37 @@ client.on('interactionCreate', async interaction => {
     const res = await crc.json();
 
     let ranks = '';
+    let ranks2 = '';
+    let voted = '';
     let totalVotes = 0;
 
     res.result.forEach((candidate) => {
       // ranks = ranks + "{0:<20} {1}".format(key, value) + "\n"
       let output = codes.filter(a => a.code == candidate.Location);      
       
-      ranks += `**${candidate.Rank}.** ${candidate.Nickname} (${output[0].name}) *[web](${candidate.Url})* -- **${parseFloat(candidate.Votes).toLocaleString("en", {
+      if (candidate.Rank < 13) {
+        ranks += `**${candidate.Rank}.** ${candidate.Nickname} (${output[0].name}) *[web](${candidate.Url})* -- **${parseFloat(candidate.Votes).toLocaleString("en", {
           minimumFractionDigits: 0,
           maximumFractionDigits: 0,
-        })}**` +
-        "\n";
+        })}**` + "\n";
+      } else {
+        ranks2 += `**${candidate.Rank}.** ${candidate.Nickname} (${output[0].name}) *[web](${candidate.Url})* -- **${parseFloat(candidate.Votes).toLocaleString("en", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        })}**` + "\n";
+      }
       
       totalVotes += parseFloat(candidate.Votes);
-      if (candidate.Rank === 12) {
+      /*if (candidate.Rank === 12) {
         ranks = ranks + "\n";
-      }
+      }*/
     });
     
-    ranks += `\n***Total ELA voted -- ${new Intl.NumberFormat('en-US').format(totalVotes)}***`;
+    voted += `***Total ELA voted -- ${new Intl.NumberFormat('en-US').format(totalVotes)}***`;
+    
+    if (ranks2.length > 1024) {
+      ranks2 = ranks2.substring(1, 1024);
+    }
 
     //ranks = ranks + `\n<b>Election close in ${blocksToGo} blocks</b>\n${days} days, ${hours} hours, ${minutes} minutes`;
     //ranks = ranks + `\n<b>Election closed</b>\n${days} days, ${hours} hours, ${minutes} minutes`;
@@ -183,6 +195,10 @@ client.on('interactionCreate', async interaction => {
     .setTitle('Cyber Republic Council')
     .setURL('https://www.cyberrepublic.org/council')
     .addField(electionStatus, ranks);
+    if (ranks2.length > 0) {
+      embed.addField('----------------------------------------------', ranks2);
+    }
+    embed.addField('----------------------------------------------', voted);
     if (blocksToGo < electionPeriod) {
       embed.addField('CR Council election in progress', `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(electionStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**End:** Block height -- **${new Intl.NumberFormat('en-US').format(electionClose)}**\n**End in:** ${days} days, ${hours} hours, ${minutes} minutes\n`);
       
