@@ -19,9 +19,17 @@ Use https://discord.com/developers/applications
 ```bash
 git clone https://github.com/MButcho/discord-cr-bot
 ```
+### Install latest NodeJS
+```bash
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+More on https://github.com/nodesource/distributions/blob/master/README.md#debinstall
 ### Install dependencies
 ```bash
 npm install
+npm install discord.js
+
 ```
 ### Create config.json in cloned folder
 ```json

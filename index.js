@@ -10,7 +10,7 @@ if (dev) check_mins = 5;
 let check_interval = check_mins * 60 * 1000;
 
 // current version
-const ver = "v1.3.7";
+const ver = "v1.3.8";
 
 // Bot start date
 let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
@@ -84,7 +84,7 @@ client.on('interactionCreate', async interaction => {
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Cyber Republic - Proposals')
     .setURL('https://www.cyberrepublic.org/proposals')
-    .addField(`Bot running for:`, `${days} days, ${hours} hours, ${minutes} minutes\n\n**Next automatic proposals check:** ${next_loop_mins}:${next_loop_secs} mins\n**Bot start:** ${start_date} UTC\n**Source code:** [CR Discord Bot ${ver}](https://github.com/MButcho/discord-cr-bot)\n\u200b`)
+    .addFields({name: `Bot running for:`, value: `${days} days, ${hours} hours, ${minutes} minutes\n\n**Next automatic proposals check:** ${next_loop_mins}:${next_loop_secs} mins\n**Bot start:** ${start_date} UTC\n**Source code:** [CR Discord Bot ${ver}](https://github.com/MButcho/discord-cr-bot)\n\u200b`});
     embed.setTimestamp();
     embed.setFooter({text: footer_text, iconURL: footer_img});
     
@@ -115,7 +115,7 @@ client.on('interactionCreate', async interaction => {
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Cyber Republic - Refactoring')
     .setURL('https://www.cyberrepublic.org/proposals/5fe404ea7b3b430078ea4866')
-    .addField('Elastos Halving Countdown', `${days} days, ${hours} hours, ${minutes} minutes`)
+    .addFields({name: 'Elastos Halving Countdown', value: `${days} days, ${hours} hours, ${minutes} minutes`});
     embed.setTimestamp();
     embed.setFooter({text: footer_text, iconURL: footer_img});
     
@@ -200,16 +200,16 @@ client.on('interactionCreate', async interaction => {
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Cyber Republic Council')
     .setURL('https://www.cyberrepublic.org/council')
-    .addField(electionStatus, ranks);
+    .addFields({name: electionStatus, value: ranks});
     if (ranks2.length > 0) {
-      embed.addField('----------------------------------------------', ranks2);
+      embed.addFields({name: '----------------------------------------------', value: ranks2});
     }
-    embed.addField('----------------------------------------------', voted);
+    embed.addFields({name: '----------------------------------------------', value: voted});
     if (blocksToGo < electionPeriod) {
-      embed.addField('CR Council election in progress', `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(electionStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**End:** Block height -- **${new Intl.NumberFormat('en-US').format(electionClose)}**\n**End in:** ${days} days, ${hours} hours, ${minutes} minutes\n`);
+      embed.addFields({name: 'CR Council election in progress', value: `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(electionStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**End:** Block height -- **${new Intl.NumberFormat('en-US').format(electionClose)}**\n**End in:** ${days} days, ${hours} hours, ${minutes} minutes\n`});
       
     } else {
-      embed.addField('Next CR Council election', `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(electionStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**Start in:** ${days} days, ${hours} hours, ${minutes} minutes\n`);
+      embed.addFields({name: 'Next CR Council election', value: `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(electionStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**Start in:** ${days} days, ${hours} hours, ${minutes} minutes\n`});
     }
         
     embed.setTimestamp();
@@ -253,9 +253,11 @@ client.on('interactionCreate', async interaction => {
         const hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
         const minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
 
-        embed.addField(`${index}. ${item.title}`, `[Link to proposal](https://www.cyberrepublic.org/proposals/${item._id})`)
-        embed.addField(`__Proposed by__`, `${item.proposedBy}`);
-        embed.addField(`__Time remaining__`, `${days} days, ${hours} hours, ${minutes} minutes\n`)
+        embed.addFields(
+          {name: `${index}. ${item.title}`, value: `[Link to proposal](https://www.cyberrepublic.org/proposals/${item._id})`},
+          {name: `__Proposed by__`, value: `${item.proposedBy}`},
+          {name: `__Time remaining__`, value: `${days} days, ${hours} hours, ${minutes} minutes\n`}
+        )
     
         let support = 0;
         let reject = 0;
@@ -285,12 +287,12 @@ client.on('interactionCreate', async interaction => {
         
         if (unchained.length = 0) voting_status += '\u200b';
         //proposals += `<i><a href='https://www.cyberrepublic.org/proposals/${item._id}'>View on Cyber Republic website</a></i>`;
-        embed.addField('__Council Votes__',voting_status);
+        embed.addFields({name: '__Council Votes__', value: voting_status});
         
-        if (unchained.length > 0) embed.addField('⚠ __Warnings__ ⚠',unchainedList+'\n\u200b');
+        if (unchained.length > 0) embed.addFields({name: '⚠ __Warnings__ ⚠', value: unchainedList+'\n\u200b'});
       });
     } else {
-      embed.addField("There are currently no proposals in the council voting period", "\u200b");
+      embed.addFields({name: "There are currently no proposals in the council voting period", value: "\u200b"});
     }
     
     embed.setTimestamp();
@@ -482,11 +484,13 @@ client.on('ready', () => {
           .setTitle(item.title)
           .setURL(`https://www.cyberrepublic.org/proposals/${item._id}`)
           //.setDescription(description)
-          .addField(description, `__**Proposed by**__: ${item.proposedBy}`)
-          .addField("__Current voting status__", voting_status);
-          if (show_unchained) embed.addField("__Warnings__", unchainedList+'\u200b');
-          if (show_undecided) embed.addField("__Council members who have not yet voted__", undecidedList+'\u200b');
-          if (show_failed) embed.addField("__Council members who failed to vote__", failedList+'\u200b');
+          .addFields(
+            {name: description, value: `__**Proposed by**__: ${item.proposedBy}`},
+            {name: "__Current voting status__", value: voting_status}
+          );
+          if (show_unchained) embed.addFields({name: "__Warnings__", value: unchainedList+'\u200b'});
+          if (show_undecided) embed.addFields({name: "__Council members who have not yet voted__", value: undecidedList+'\u200b'});
+          if (show_failed) embed.addFields({name: "__Council members who failed to vote__", value: failedList+'\u200b'});
           embed.setTimestamp();
           embed.setFooter({text: footer_text, iconURL: footer_img});
           
@@ -502,7 +506,7 @@ client.on('ready', () => {
         .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
         .setTitle('Cyber Republic - Proposals')
         .setURL('https://www.cyberrepublic.org/proposals')
-        .addField("There are currently no proposals in the council voting period", "\u200b")
+        .addFields({name: "There are currently no proposals in the council voting period", value: "\u200b"});
         embed.setTimestamp();
         embed.setFooter({text: footer_text, iconURL: footer_img});
         
