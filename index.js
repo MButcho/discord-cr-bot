@@ -6,11 +6,11 @@ const request = require('request');
 const fetch = require('node-fetch');
 let loop = false;
 let check_mins = 5;
-if (dev) check_mins = 5;
+if (dev) check_mins = 0.1;
 let check_interval = check_mins * 60 * 1000;
 
 // current version
-const ver = "v1.3.8";
+const ver = "v1.3.9";
 
 // Bot start date
 let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
@@ -19,7 +19,8 @@ let start_date_raw = new Date();
 // Create a new client instance
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]});
 let channel_id = '917029748192985139'; // Elastos Discord #🌎┃cyber-republic-dao
-if (dev) channel_id = '920225673887494157'; // MB Test server #general
+if (dev) channel_id = '925767750767497216'; // MB Test server #test
+let all_voted = '😎 Everyone voted! Well done!\n\u200b';
 
 // Basic variables
 const council = {
@@ -36,6 +37,7 @@ const council = {
   "5ee045869e10fd007849e3d2": "The Strawberry Council",
   "5c738c9a471cb3009422b42e": "Jingyu Niu",
   "5b4e46dbccac490035e4072f": "Sash | Elacity 🐘",
+  "62b1dc7304223900785aabc2": "Elacity Official",
   "62a97bb904223900785a5897": "MButcho ● Nenchy",
   "5b481442e3ffea0035f4e6e7": "DR",
   "62b1a5c804223900785aa988": "Infi",
@@ -263,12 +265,16 @@ client.on('interactionCreate', async interaction => {
         let reject = 0;
         let undecided = 0;
         let abstention = 0;
+        let undecideds = [];
         let unchained = [];
 
         item.voteResult.forEach((vote) => {
           if (vote.value === "support" && vote.status === "chained") support++;
           if (vote.value === "reject" && vote.status === "chained") reject++;
-          if (vote.value === "undecided") undecided++;
+          if (vote.value === "undecided") {
+            undecided++;
+            undecideds.push(vote.votedBy);
+          }
           if (vote.value === "abstention" && vote.status === "chained") abstention++;
           if (vote.value !== "undecided" && vote.status === "unchain") {
             unchained.push(`${council[vote.votedBy]} voted ${vote.value} but did not chain the vote`);
@@ -280,16 +286,27 @@ client.on('interactionCreate', async interaction => {
           unchained.forEach((warning) => {
             unchainedList += `${warning}\n`
           });
-        }
+        };
+        
+        let undecidedList = '';
+        if (undecideds.length !== 0) {
+          undecideds.forEach((member) => {
+            undecidedList += `${council[member]}\n`;
+          });
+        };
                 
         //proposals += `<b><u>Council Votes</u></b>\n&#9989;  Support - <b>${support}</b>\n&#10060;  Reject - <b>${reject}</b>\n&#128280;  Abstain - <b>${abstention}</b>\n&#9888;  Undecided - <b>${undecided}</b>\n\n`;
         let voting_status = `✅  Support - **${support}**\n❌  Reject - **${reject}**\n🔘  Abstain - **${abstention}**\n⚠  Undecided - **${undecided}**\n\u200b`;
         
         if (unchained.length = 0) voting_status += '\u200b';
         //proposals += `<i><a href='https://www.cyberrepublic.org/proposals/${item._id}'>View on Cyber Republic website</a></i>`;
-        embed.addFields({name: '__Council Votes__', value: voting_status});
-        
-        if (unchained.length > 0) embed.addFields({name: '⚠ __Warnings__ ⚠', value: unchainedList+'\n\u200b'});
+        embed.addFields({name: '__Council Votes__', value: voting_status});        
+        if (undecidedList.length > 0) {
+          embed.addFields({name: '⚠ __Not Voted Yet__', value: undecidedList+'\u200b'});
+        } else {
+          embed.addFields({name: '✅ __Voting__', value: all_voted});
+        }
+        if (unchained.length > 0) embed.addFields({name: '⚠ __Not Chained__ ⚠', value: unchainedList+'\u200b'});
       });
     } else {
       embed.addFields({name: "There are currently no proposals in the council voting period", value: "\u200b"});
@@ -422,20 +439,17 @@ client.on('ready', () => {
           }
           let undecidedList = '';
           let failedList = '';
-          if (undecideds.length === 0) {
-            undecidedList = '😎 Everyone voted! Well done!\n';
-            failedList = '😎 Everyone voted! Well done!\n';
-          } else {
+          if (undecideds.length !== 0) {
             undecideds.forEach((member) => {
               undecidedList += `${council[member]}\n`;
               failedList += `${council[member]} ☹\n`;
             });
-          }
+          };
 
           let _message = "";
           let description = "";
           let show_unchained = false;
-          let show_undecided = false;
+          let show_undecided = true;
           let show_failed = false;
           
           const blocksRemaining = item.proposedEndsHeight - height.Result;
@@ -453,25 +467,23 @@ client.on('ready', () => {
             if (storedAlerts[item._id] === 3) return;
             description = '👉 Hey you! 👈 There are *3 days* remaining to vote on proposal';
             if (unchained.length > 0) show_unchained = true;
-            if (undecidedList.length > 0) show_undecided = true;
             storedAlerts[item._id] = 3;
           } else if (blocksRemaining < 720 && blocksRemaining > 670) {
             if (storedAlerts[item._id] === 1) return;
             description = '⚠ Warning! ⚠ There is only *1 day* remaining to vote on proposal';
             if (unchained.length > 0) show_unchained = true;
-            if (undecidedList.length > 0) show_undecided = true;
             storedAlerts[item._id] = 1;
           } else if (blocksRemaining < 360 && blocksRemaining > 310) {
             if (storedAlerts[item._id] === 0.5) return;
             description = '‼ Alert! ‼ There are only *12 hours* remaining to vote on proposal';
             if (unchained.length > 0) show_unchained = true;
-            if (undecidedList.length > 0) show_undecided = true;
             storedAlerts[item._id] = 0.5;
           } else if (blocksRemaining <= 7) {
             if (storedAlerts[item._id] === 0) return;
             description = '☠ The council voting period has elapsed for proposal';
             if (unchained.length > 0) show_unchained = true;
-            if (undecidedList.length > 0) show_failed = true;
+            show_failed = true;
+            show_undecided = false;
             storedAlerts[item._id] = 0;
           } else {
             return;
@@ -488,9 +500,21 @@ client.on('ready', () => {
             {name: description, value: `__**Proposed by**__: ${item.proposedBy}`},
             {name: "__Current voting status__", value: voting_status}
           );
-          if (show_unchained) embed.addFields({name: "__Warnings__", value: unchainedList+'\u200b'});
-          if (show_undecided) embed.addFields({name: "__Council members who have not yet voted__", value: undecidedList+'\u200b'});
-          if (show_failed) embed.addFields({name: "__Council members who failed to vote__", value: failedList+'\u200b'});
+          if (show_unchained) embed.addFields({name: "⚠ __Not Chained Yet__", value: unchainedList+'\u200b'});
+          if (show_undecided) {
+            if (undecidedList.length > 0) {
+              embed.addFields({name: '⚠ __Not Voted Yet__', value: undecidedList+'\u200b'});
+            } else {
+              embed.addFields({name: '✅ __Voting__', value: all_voted});
+            }
+          }
+          if (show_failed) {
+            if (failedList.length > 0) {
+              embed.addFields({name: "⛔️ __Failed to vote__", value: failedList+'\u200b'});
+            } else {
+              embed.addFields({name: "✅ __Voting__", value: all_voted});
+            }
+          }
           embed.setTimestamp();
           embed.setFooter({text: footer_text, iconURL: footer_img});
           
