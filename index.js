@@ -10,7 +10,7 @@ if (dev) check_mins = 0.1;
 let check_interval = check_mins * 60 * 1000;
 
 // current version
-const ver = "v1.3.9";
+const ver = "v1.4.0";
 
 // Bot start date
 let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
@@ -118,6 +118,40 @@ client.on('interactionCreate', async interaction => {
     .setTitle('Cyber Republic - Refactoring')
     .setURL('https://www.cyberrepublic.org/proposals/5fe404ea7b3b430078ea4866')
     .addFields({name: 'Elastos Halving Countdown', value: `${days} days, ${hours} hours, ${minutes} minutes`});
+    embed.setTimestamp();
+    embed.setFooter({text: footer_text, iconURL: footer_img});
+    
+    //await interaction.reply({ embeds: [embed] });
+    interaction.editReply({ embeds: [embed] });
+    
+  } else if (commandName === 'bpos') {
+    console.log(`${command_date} BPoS command triggered`);
+    await interaction.deferReply();
+    
+    const bposBlocks = 1405000;
+    const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
+    const height = await block.json();
+    
+    // Get next halving block
+    const blocksToGo = bposBlocks - parseInt(height.Result);
+    const secondsRemaining = blocksToGo * 2 * 60;
+    
+    let days = Math.floor(secondsRemaining / (60 * 60 * 24));
+    let hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
+    let minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
+
+    // Send embeded message
+    const embed = new MessageEmbed()
+    .setColor(0x5BFFD0)
+    .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
+    .setTitle('Bonded Proof of Stake')
+    .setURL('https://www.cyberrepublic.org/proposals/61cdad4cb5d3b6007833e15e');
+    if (blocksToGo < 0) {
+      embed.addFields({name: `BPoS Activation Countdown`, value: `BPoS was activated on block ${bposBlocks}`});
+    } else {
+      embed.addFields({name: `BPoS Activation Countdown (block ${bposBlocks})`, value: `${days} days, ${hours} hours, ${minutes} minutes`});
+    }
+    embed.addFields({name: 'BPoS Nodes Active', value: `?`});
     embed.setTimestamp();
     embed.setFooter({text: footer_text, iconURL: footer_img});
     

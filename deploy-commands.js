@@ -5,7 +5,8 @@ const { clientId, guildId, token } = require('./config.json');
 
 const commands = [
 	new SlashCommandBuilder().setName('ping-cr-bot').setDescription('Shows if CR Bot is running'),
-	new SlashCommandBuilder().setName('halving').setDescription('Shows countdown to next Elastos halving'),
+	new SlashCommandBuilder().setName('bpos').setDescription('Shows information about BPoS activation'),
+  new SlashCommandBuilder().setName('halving').setDescription('Shows countdown to next Elastos halving'),
 	new SlashCommandBuilder().setName('election').setDescription('Shows current CR election status'),
 	new SlashCommandBuilder().setName('proposals').setDescription('Shows current proposals in the council voting period'),
 ]
