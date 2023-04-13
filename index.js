@@ -10,7 +10,7 @@ if (dev) check_mins = 0.1;
 let check_interval = check_mins * 60 * 1000;
 
 // current version
-const ver = "v1.4.0";
+const ver = "v1.4.1";
 
 // Bot start date
 let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
@@ -132,7 +132,45 @@ client.on('interactionCreate', async interaction => {
     const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
     const height = await block.json();
     
-    // Get next halving block
+    
+    let dpos_1_count = 0;
+    let dpos_1 = {
+      method: 'listproducers',
+      params: {"state": "active", "identity":"v1"},
+    };
+    
+    const dpos_1_request = await fetch('https://api.trinity-tech.io/ela', {
+      method: 'POST',
+      body: JSON.stringify(dpos_1),
+      headers: {
+          'Content-Type': 'application/json'
+          // fyi, NO need for content length
+      }
+    })
+    .then(res => res.json())
+    .then(json => dpos_1_count = json.result.totalcounts)
+    .catch (err => console.log(err))
+    
+    let dpos_2_count = 0;
+    let dpos_2 = {
+      method: 'listproducers',
+      params: {"state": "active", "identity":"v2"},
+    };
+    
+    const dpos_2_request = await fetch('https://api.trinity-tech.io/ela', {
+      method: 'POST',
+      body: JSON.stringify(dpos_1),
+      headers: {
+          'Content-Type': 'application/json'
+          // fyi, NO need for content length
+      }
+    })
+    .then(res => res.json())
+    .then(json => dpos_2_count = json.result.totalcounts)
+    .catch (err => console.log(err))
+    
+    if (dpos_1_count == dpos_2_count) dpos_2_count = "?";
+    
     const blocksToGo = bposBlocks - parseInt(height.Result);
     const secondsRemaining = blocksToGo * 2 * 60;
     
@@ -151,7 +189,7 @@ client.on('interactionCreate', async interaction => {
     } else {
       embed.addFields({name: `BPoS Activation Countdown (block ${bposBlocks})`, value: `${days} days, ${hours} hours, ${minutes} minutes`});
     }
-    embed.addFields({name: 'BPoS Nodes Active', value: `?`});
+    embed.addFields({name: 'Active Nodes', value: `DPoS 1.0: **${dpos_1_count}**\nBPoS (DPoS 2.0): **${dpos_2_count}**`});
     embed.setTimestamp();
     embed.setFooter({text: footer_text, iconURL: footer_img});
     
