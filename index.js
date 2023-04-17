@@ -10,7 +10,7 @@ if (dev) check_mins = 0.1;
 let check_interval = check_mins * 60 * 1000;
 
 // current version
-const ver = "v1.4.1";
+const ver = "v1.4.2";
 
 // Bot start date
 let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
@@ -117,7 +117,8 @@ client.on('interactionCreate', async interaction => {
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Cyber Republic - Refactoring')
     .setURL('https://www.cyberrepublic.org/proposals/5fe404ea7b3b430078ea4866')
-    .addFields({name: 'Elastos Halving Countdown', value: `${days} days, ${hours} hours, ${minutes} minutes`});
+    .addFields({name: 'Elastos Halving Countdown', value: `${days} days, ${hours} hours, ${minutes} minutes`})
+    .addFields({name: 'ELA emission', value: '**Until 12/2025**: 400 000 ELA / Year = ~1.52 ELA / 2 mins\n**Rewards are split**: 35% PoW Miners / 35% DPoS Nodes / 30% CR'});
     embed.setTimestamp();
     embed.setFooter({text: footer_text, iconURL: footer_img});
     
