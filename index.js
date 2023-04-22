@@ -10,7 +10,7 @@ if (dev) check_mins = 0.1;
 let check_interval = check_mins * 60 * 1000;
 
 // current version
-const ver = "v1.4.2";
+const ver = "v1.4.3";
 
 // Bot start date
 let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
@@ -130,6 +130,7 @@ client.on('interactionCreate', async interaction => {
     await interaction.deferReply();
     
     const bposBlocks = 1405000;
+    const reqVotes = 80000;
     const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
     const height = await block.json();
     
@@ -152,7 +153,11 @@ client.on('interactionCreate', async interaction => {
     .then(json => dpos_1_count = json.result.totalcounts)
     .catch (err => console.log(err))
     
-    let dpos_2_count = 0;
+    let producers = "";
+    let dpos_2_count_80 = 0;
+    let dpos_2_count_40 = 0;
+    let dpos_2_count_20 = 0;
+    let dpos_2_count_0 = 0;
     let dpos_2 = {
       method: 'listproducers',
       params: {"state": "active", "identity":"v2"},
@@ -160,20 +165,35 @@ client.on('interactionCreate', async interaction => {
     
     const dpos_2_request = await fetch('https://api.trinity-tech.io/ela', {
       method: 'POST',
-      body: JSON.stringify(dpos_1),
+      body: JSON.stringify(dpos_2),
       headers: {
           'Content-Type': 'application/json'
           // fyi, NO need for content length
       }
     })
     .then(res => res.json())
-    .then(json => dpos_2_count = json.result.totalcounts)
+    .then(json => producers = json.result.producers)
+    //.then(json => producers = json.result.producers)
     .catch (err => console.log(err))
     
-    if (dpos_1_count == dpos_2_count) dpos_2_count = "?";
+    producers.forEach(producer => {
+      let dposv2votes = producer.dposv2votes;
+      if (parseInt(dposv2votes) > reqVotes) {
+        dpos_2_count_80 = dpos_2_count_80 + 1
+      } else if (parseInt(dposv2votes) > reqVotes/2) {
+        dpos_2_count_40 = dpos_2_count_40 + 1
+      }  else if (parseInt(dposv2votes) > reqVotes/4) {
+        dpos_2_count_20 = dpos_2_count_20 + 1
+      } else {
+        dpos_2_count_0 = dpos_2_count_0 + 1
+      }
+    });
+    
+    dpos_2_count = dpos_2_count_80 + dpos_2_count_40 + dpos_2_count_20 + dpos_2_count_0
     
     const blocksToGo = bposBlocks - parseInt(height.Result);
     const secondsRemaining = blocksToGo * 2 * 60;
+    if (blocksToGo > 0) dpos_2_count = "?";
     
     let days = Math.floor(secondsRemaining / (60 * 60 * 24));
     let hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
@@ -186,11 +206,12 @@ client.on('interactionCreate', async interaction => {
     .setTitle('Bonded Proof of Stake')
     .setURL('https://www.cyberrepublic.org/proposals/61cdad4cb5d3b6007833e15e');
     if (blocksToGo < 0) {
-      embed.addFields({name: `BPoS Activation Countdown`, value: `BPoS was activated on block ${bposBlocks}`});
+      embed.addFields({name: `BPoS Initiation`, value: `BPoS was initiated on block ${bposBlocks}`});
     } else {
-      embed.addFields({name: `BPoS Activation Countdown (block ${bposBlocks})`, value: `${days} days, ${hours} hours, ${minutes} minutes`});
+      embed.addFields({name: `BPoS Initiation Countdown (block ${bposBlocks})`, value: `${days} days, ${hours} hours, ${minutes} minutes`});
     }
-    embed.addFields({name: 'Active Nodes', value: `DPoS 1.0: **${dpos_1_count}**\nBPoS (DPoS 2.0): **${dpos_2_count}**`});
+    embed.addFields({name: 'BPoS', value: `Total nodes: **${dpos_2_count}**\n80k+ votes: **${dpos_2_count_80}**\n40k+ votes: **${dpos_2_count_40}** (${dpos_2_count_80+dpos_2_count_40})\n20k+ votes: **${dpos_2_count_20}** (${dpos_2_count_80+dpos_2_count_40+dpos_2_count_20})\nLess than 20k+ votes: **${dpos_2_count_0}** (${dpos_2_count})`});
+    embed.addFields({name: 'DPoS 1.0 (old)', value: `Active nodes: **${dpos_1_count}**`});
     embed.setTimestamp();
     embed.setFooter({text: footer_text, iconURL: footer_img});
     
