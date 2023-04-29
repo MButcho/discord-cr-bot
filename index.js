@@ -10,7 +10,7 @@ if (dev) check_mins = 0.1;
 let check_interval = check_mins * 60 * 1000;
 
 // current version
-const ver = "v1.4.3";
+const ver = "v1.4.4";
 
 // Bot start date
 let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
@@ -135,37 +135,40 @@ client.on('interactionCreate', async interaction => {
     const height = await block.json();
     
     
-    let dpos_1_count = 0;
-    let dpos_1 = {
+    let dpos_count = 0;
+    let dpos = {
       method: 'listproducers',
       params: {"state": "active", "identity":"v1"},
     };
     
-    const dpos_1_request = await fetch('https://api.trinity-tech.io/ela', {
+    const dpos_request = await fetch('https://api.trinity-tech.io/ela', {
       method: 'POST',
-      body: JSON.stringify(dpos_1),
+      body: JSON.stringify(dpos),
       headers: {
           'Content-Type': 'application/json'
           // fyi, NO need for content length
       }
     })
     .then(res => res.json())
-    .then(json => dpos_1_count = json.result.totalcounts)
+    .then(json => dpos_count = json.result.totalcounts)
     .catch (err => console.log(err))
     
+    // BPoS
     let producers = "";
-    let dpos_2_count_80 = 0;
-    let dpos_2_count_40 = 0;
-    let dpos_2_count_20 = 0;
-    let dpos_2_count_0 = 0;
-    let dpos_2 = {
+    let bpos_count_80 = 0;
+    let bpos_count_40 = 0;
+    let bpos_count_20 = 0;
+    let bpos_count_0 = 0;
+    let bpos_count_inactive = 0;
+    let bpos_inactive = "";
+    let bpos = {
       method: 'listproducers',
-      params: {"state": "active", "identity":"v2"},
+      params: {"state": "all", "identity":"v2"},
     };
     
-    const dpos_2_request = await fetch('https://api.trinity-tech.io/ela', {
+    const bpos_request = await fetch('https://api.trinity-tech.io/ela', {
       method: 'POST',
-      body: JSON.stringify(dpos_2),
+      body: JSON.stringify(bpos),
       headers: {
           'Content-Type': 'application/json'
           // fyi, NO need for content length
@@ -178,22 +181,32 @@ client.on('interactionCreate', async interaction => {
     
     producers.forEach(producer => {
       let dposv2votes = producer.dposv2votes;
-      if (parseInt(dposv2votes) > reqVotes) {
-        dpos_2_count_80 = dpos_2_count_80 + 1
-      } else if (parseInt(dposv2votes) > reqVotes/2) {
-        dpos_2_count_40 = dpos_2_count_40 + 1
-      }  else if (parseInt(dposv2votes) > reqVotes/4) {
-        dpos_2_count_20 = dpos_2_count_20 + 1
+      let state = producer.state;
+      let nickname = producer.nickname;
+      
+      if (state == "Active") {
+        if (parseInt(dposv2votes) > reqVotes) {
+          bpos_count_80 = bpos_count_80 + 1;
+        } else if (parseInt(dposv2votes) > reqVotes/2) {
+          bpos_count_40 = bpos_count_40 + 1;
+        }  else if (parseInt(dposv2votes) > reqVotes/4) {
+          bpos_count_20 = bpos_count_20 + 1;
+        } else {
+          bpos_count_0 = bpos_count_0 + 1;
+        }
+      
       } else {
-        dpos_2_count_0 = dpos_2_count_0 + 1
+        bpos_count_inactive = bpos_count_inactive + 1;
+        bpos_inactive += nickname + "\n"
       }
+      
     });
     
-    dpos_2_count = dpos_2_count_80 + dpos_2_count_40 + dpos_2_count_20 + dpos_2_count_0
+    bpos_count = bpos_count_80 + bpos_count_40 + bpos_count_20 + bpos_count_0
     
     const blocksToGo = bposBlocks - parseInt(height.Result);
     const secondsRemaining = blocksToGo * 2 * 60;
-    if (blocksToGo > 0) dpos_2_count = "?";
+    if (blocksToGo > 0) bpos_count = "?";
     
     let days = Math.floor(secondsRemaining / (60 * 60 * 24));
     let hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
@@ -205,13 +218,14 @@ client.on('interactionCreate', async interaction => {
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Bonded Proof of Stake')
     .setURL('https://www.cyberrepublic.org/proposals/61cdad4cb5d3b6007833e15e');
+    embed.addFields({name: 'Active BPoS nodes', value: `Total active: **${bpos_count}**\n80k+ votes: **${bpos_count_80}**\n40k+ votes: **${bpos_count_40}** (${bpos_count_80+bpos_count_40})\n20k+ votes: **${bpos_count_20}** (${bpos_count_80+bpos_count_40+bpos_count_20})\nLess than 20k+ votes: **${bpos_count_0}** (${bpos_count})`});
+    embed.addFields({name: 'Inactive BPoS nodes', value: `Total inactive: **${bpos_count_inactive}**\n${bpos_inactive}`});
+    embed.addFields({name: 'DPoS 1.0 (old)', value: `Active nodes: **${dpos_count}**`});
     if (blocksToGo < 0) {
       embed.addFields({name: `BPoS Initiation`, value: `BPoS was initiated on block ${bposBlocks}`});
     } else {
       embed.addFields({name: `BPoS Initiation Countdown (block ${bposBlocks})`, value: `${days} days, ${hours} hours, ${minutes} minutes`});
     }
-    embed.addFields({name: 'BPoS', value: `Total nodes: **${dpos_2_count}**\n80k+ votes: **${dpos_2_count_80}**\n40k+ votes: **${dpos_2_count_40}** (${dpos_2_count_80+dpos_2_count_40})\n20k+ votes: **${dpos_2_count_20}** (${dpos_2_count_80+dpos_2_count_40+dpos_2_count_20})\nLess than 20k+ votes: **${dpos_2_count_0}** (${dpos_2_count})`});
-    embed.addFields({name: 'DPoS 1.0 (old)', value: `Active nodes: **${dpos_1_count}**`});
     embed.setTimestamp();
     embed.setFooter({text: footer_text, iconURL: footer_img});
     
