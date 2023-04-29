@@ -10,7 +10,7 @@ if (dev) check_mins = 0.1;
 let check_interval = check_mins * 60 * 1000;
 
 // current version
-const ver = "v1.4.4";
+const ver = "v1.4.5";
 
 // Bot start date
 let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
@@ -239,17 +239,26 @@ client.on('interactionCreate', async interaction => {
     const councilTerm = 262800;
     const firstCouncil = 658930;
     const electionPeriod = 21600;
+    const transitionPeriod = 10080;    
     const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
     const height = await block.json();
     const block_height = parseInt(height.Result);
-    // const block_height = 1184531;   
-    
+    //const block_height = 1415651;   
     
     // Get election dates
+    const currentCouncilEnd = parseInt(firstCouncil)+(councilTerm*(Math.trunc((block_height-parseInt(firstCouncil))/parseInt(councilTerm))+1));
+    const currentCouncilStart = currentCouncilEnd - councilTerm;
+    let blocksToGo = currentCouncilEnd - block_height;
+    const secsCurrentCouncil = blocksToGo < 0 ? 0 : blocksToGo * 2 * 60;
+    let currentDays = Math.floor(secsCurrentCouncil / (60 * 60 * 24));
+    let currentHours = Math.floor((secsCurrentCouncil % (60 * 60 * 24)) / (60 * 60));
+    let currentMinutes = Math.floor((secsCurrentCouncil % (60 * 60)) / 60);
+    let currentSeconds = Math.floor(secsCurrentCouncil % 60);
+    
     const electionClose = parseInt(firstCouncil)+(councilTerm*(Math.trunc((block_height-parseInt(firstCouncil))/parseInt(councilTerm))+1));
-    const electionStart = electionClose - electionPeriod;
+    const electionStart = electionClose - electionPeriod - transitionPeriod;
 
-    let blocksToGo = electionClose - block_height;
+    blocksToGo = electionStart - block_height;
     if (blocksToGo > electionPeriod) {
       blocksToGo = electionClose - block_height - electionPeriod;
       electionStatus = "Election Results";
@@ -315,12 +324,8 @@ client.on('interactionCreate', async interaction => {
       embed.addFields({name: '----------------------------------------------', value: ranks2});
     }
     embed.addFields({name: '----------------------------------------------', value: voted});
-    if (blocksToGo < electionPeriod) {
-      embed.addFields({name: 'CR Council election in progress', value: `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(electionStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**End:** Block height -- **${new Intl.NumberFormat('en-US').format(electionClose)}**\n**End in:** ${days} days, ${hours} hours, ${minutes} minutes\n`});
-      
-    } else {
-      embed.addFields({name: 'Next CR Council election', value: `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(electionStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**Start in:** ${days} days, ${hours} hours, ${minutes} minutes\n`});
-    }
+    embed.addFields({name: 'Current CR Council', value: `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(currentCouncilStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**End:** Block height -- **${new Intl.NumberFormat('en-US').format(currentCouncilEnd)}**\n**End in:** ${currentDays} days, ${currentHours} hours, ${currentMinutes} minutes\n`});
+    embed.addFields({name: 'Next CR Council election', value: `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(electionStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**End:** Block height -- **${new Intl.NumberFormat('en-US').format(electionClose)}**\n**Start in:** ${days} days, ${hours} hours, ${minutes} minutes\n`});
         
     embed.setTimestamp();
     embed.setFooter({text: footer_text, iconURL: footer_img});
