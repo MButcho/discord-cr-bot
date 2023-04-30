@@ -10,7 +10,7 @@ if (dev) check_mins = 0.1;
 let check_interval = check_mins * 60 * 1000;
 
 // current version
-const ver = "v1.4.5";
+const ver = "v1.4.6";
 
 // Bot start date
 let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
@@ -45,7 +45,7 @@ const council = {
   "5d14716f43816e009415219b": "PG BAO",
 };
 
-const footer_text = `Support CR Discord Bot ${ver} via donations to EUSMsck3svNiacva9LfwrLfbvNnUU27z77`;
+const footer_text = `Support CR Discord Bot ${ver} via donations to EXwQKQW6DZ9ZMH1EwU1cM6JR9tAdtNkgTW`;
 const footer_img = 'https://i.postimg.cc/Yq1g9cWv/avatar.png';
 
 // When the client is ready
@@ -239,11 +239,13 @@ client.on('interactionCreate', async interaction => {
     const councilTerm = 262800;
     const firstCouncil = 658930;
     const electionPeriod = 21600;
-    const transitionPeriod = 10080;    
+    const transitionPeriod = 10080;
+    let electionStateMsg = "";
+    let transitionState = false;
     const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
     const height = await block.json();
     const block_height = parseInt(height.Result);
-    //const block_height = 1415651;   
+    //const block_height = 1447331;   
     
     // Get election dates
     const currentCouncilEnd = parseInt(firstCouncil)+(councilTerm*(Math.trunc((block_height-parseInt(firstCouncil))/parseInt(councilTerm))+1));
@@ -255,16 +257,27 @@ client.on('interactionCreate', async interaction => {
     let currentMinutes = Math.floor((secsCurrentCouncil % (60 * 60)) / 60);
     let currentSeconds = Math.floor(secsCurrentCouncil % 60);
     
-    const electionClose = parseInt(firstCouncil)+(councilTerm*(Math.trunc((block_height-parseInt(firstCouncil))/parseInt(councilTerm))+1));
-    const electionStart = electionClose - electionPeriod - transitionPeriod;
-
-    blocksToGo = electionStart - block_height;
-    if (blocksToGo > electionPeriod) {
-      blocksToGo = electionClose - block_height - electionPeriod;
-      electionStatus = "Election Results";
-    } else {
-      electionStatus = "Election Status";
+    if (blocksToGo <= transitionPeriod) {
+      transitionState = true;
     }
+    
+    let electionClose = parseInt(firstCouncil)+(councilTerm*(Math.trunc((block_height-parseInt(firstCouncil))/parseInt(councilTerm))+1))-transitionPeriod;
+    let electionStart = electionClose - electionPeriod;
+    
+    if (block_height > electionStart && block_height < electionClose) {
+      blocksToGo = electionClose - block_height;
+      electionStatus = "Election Status";
+    } else {
+      if (!transitionState) {
+        blocksToGo = electionStart - block_height;
+      } else {
+        blocksToGo = currentCouncilEnd - block_height;
+        electionClose = currentCouncilEnd;
+        electionStart = electionClose - transitionPeriod;
+      }
+      electionStatus = "Election Results";
+    }
+    
     const secondsRemaining = blocksToGo < 0 ? 0 : blocksToGo * 2 * 60;
     let days = Math.floor(secondsRemaining / (60 * 60 * 24));
     let hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
@@ -321,11 +334,28 @@ client.on('interactionCreate', async interaction => {
     .setURL('https://www.cyberrepublic.org/council')
     .addFields({name: electionStatus, value: ranks});
     if (ranks2.length > 0) {
-      embed.addFields({name: '----------------------------------------------', value: ranks2});
+      embed.addFields({name: '-----------------------------------------', value: ranks2});
     }
-    embed.addFields({name: '----------------------------------------------', value: voted});
+    embed.addFields({name: '-----------------------------------------', value: voted});
     embed.addFields({name: 'Current CR Council', value: `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(currentCouncilStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**End:** Block height -- **${new Intl.NumberFormat('en-US').format(currentCouncilEnd)}**\n**End in:** ${currentDays} days, ${currentHours} hours, ${currentMinutes} minutes\n`});
-    embed.addFields({name: 'Next CR Council election', value: `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(electionStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**End:** Block height -- **${new Intl.NumberFormat('en-US').format(electionClose)}**\n**Start in:** ${days} days, ${hours} hours, ${minutes} minutes\n`});
+    
+    if (!transitionState) {
+      if (block_height > electionStart && block_height < electionClose) {
+        electionStateMsg = `CR Election in progress`;
+        electionStateTime = `**End in:** ${days} days, ${hours} hours, ${minutes} minutes`;
+        
+      } else {
+        electionStateMsg = `Next CR Council election`;
+        electionStateTime = `**Start in:** ${days} days, ${hours} hours, ${minutes} minutes`;
+      }
+    } else {
+      electionStateMsg = `Transition period`;
+      electionStateTime = `**End in:** ${days} days, ${hours} hours, ${minutes} minutes`;
+    }
+    
+    //console.log(`${block_height} > ${electionStart} && ${block_height} < ${electionClose}`);
+    
+    embed.addFields({name: `${electionStateMsg}`, value: `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(electionStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**End:** Block height -- **${new Intl.NumberFormat('en-US').format(electionClose)}**\n${electionStateTime}\n`});
         
     embed.setTimestamp();
     embed.setFooter({text: footer_text, iconURL: footer_img});
