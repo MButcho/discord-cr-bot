@@ -9,8 +9,14 @@ let check_mins = 5;
 if (dev) check_mins = 0.1;
 let check_interval = check_mins * 60 * 1000;
 
-// current version
-const ver = "v1.4.6";
+// basic variables
+const ver = "v1.5.0";
+const api_height = "https://node1.elaphant.app/api/v1/block/height";
+const api_crc = "https://node1.elaphant.app/api/v1/crc/rank/height/9999999999999?state=active";
+const api_bpos = "https://api.trinity-tech.io/ela";
+const api_proposals = "https://api.cyberrepublic.org/api/cvote/list_public?voteResult=all";
+let connection_ok = true;
+const err_msg = "API is currently in down, please try again later ...";
 
 // Bot start date
 let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
@@ -21,6 +27,13 @@ const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_
 let channel_id = '917029748192985139'; // Elastos Discord #🌎┃cyber-republic-dao
 if (dev) channel_id = '925767750767497216'; // MB Test server #test
 let all_voted = '😎 Everyone voted! Well done!\n\u200b';
+
+let days = 0;
+let hours = 0;
+let minutes = 0;
+let seconds = 0;
+let height = 0;
+let block_height = "";
 
 // Basic variables
 const council = {
@@ -45,8 +58,8 @@ const council = {
   "5d14716f43816e009415219b": "PG BAO",
 };
 
-const footer_text = `Support CR Discord Bot ${ver} via donations to EXwQKQW6DZ9ZMH1EwU1cM6JR9tAdtNkgTW`;
-const footer_img = 'https://i.postimg.cc/Yq1g9cWv/avatar.png';
+const footer_text = `Support CR Bot ${ver} creator via EXwQKQW6DZ9ZMH1EwU1cM6JR9tAdtNkgTW`;
+const footer_img = 'https://i.postimg.cc/660rjMR1/avatar-laser-blue.png';
 
 // When the client is ready
 client.once('ready', () => {
@@ -68,9 +81,9 @@ client.on('interactionCreate', async interaction => {
     console.log(`${command_date} Ping command triggered`);
     await interaction.deferReply();
     
-    let days = Math.floor(seconds_since_start / (60 * 60 * 24));
-    let hours = Math.floor((seconds_since_start % (60 * 60 * 24)) / (60 * 60));
-    let minutes = Math.floor((seconds_since_start % (60 * 60)) / 60);
+    days = Math.floor(seconds_since_start / (60 * 60 * 24));
+    hours = Math.floor((seconds_since_start % (60 * 60 * 24)) / (60 * 60));
+    minutes = Math.floor((seconds_since_start % (60 * 60)) / 60);
     
     // calculate next loop run
     let next_loop_round = Math.trunc((parseInt(seconds_since_start)/60)/check_mins)+1;
@@ -87,7 +100,7 @@ client.on('interactionCreate', async interaction => {
     .setTitle('Cyber Republic - Proposals')
     .setURL('https://www.cyberrepublic.org/proposals')
     .addFields({name: `Bot running for:`, value: `${days} days, ${hours} hours, ${minutes} minutes\n\n**Next automatic proposals check:** ${next_loop_mins}:${next_loop_secs} mins\n**Bot start:** ${start_date} UTC\n**Source code:** [CR Discord Bot ${ver}](https://github.com/MButcho/discord-cr-bot)\n\u200b`});
-    embed.setTimestamp();
+    //embed.setTimestamp();
     embed.setFooter({text: footer_text, iconURL: footer_img});
     
     //await interaction.reply({ embeds: [embed] });
@@ -98,60 +111,62 @@ client.on('interactionCreate', async interaction => {
     await interaction.deferReply();
     
     const halvingBlocks = 1051200;
-    const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
-    const height = await block.json();
+    height = await blockHeight();
     
-    // Get next halving block
-    let halvingBlock = halvingBlocks*(Math.trunc(parseInt(height.Result)/halvingBlocks)+1);
-    
-    const blocksToGo = halvingBlock - parseInt(height.Result);
-    const secondsRemaining = blocksToGo * 2 * 60;
+    if (connection_ok) {
+      // Get next halving block
+      let halvingBlock = halvingBlocks*(Math.trunc(parseInt(height.Result)/halvingBlocks)+1);
+      
+      const blocksToGo = halvingBlock - parseInt(height.Result);
+      const secondsRemaining = blocksToGo * 2 * 60;
 
-    let days = Math.floor(secondsRemaining / (60 * 60 * 24));
-    let hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
-    let minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
+      days = Math.floor(secondsRemaining / (60 * 60 * 24));
+      hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
+      minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
+    }
 
     // Send embeded message
     const embed = new MessageEmbed()
     .setColor(0x5BFFD0)
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Cyber Republic - Refactoring')
-    .setURL('https://www.cyberrepublic.org/proposals/5fe404ea7b3b430078ea4866')
-    .addFields({name: 'Elastos Halving Countdown', value: `${days} days, ${hours} hours, ${minutes} minutes`})
-    .addFields({name: 'ELA emission', value: '**Until 12/2025**: 400 000 ELA / Year = ~1.52 ELA / 2 mins\n**Rewards are split**: 35% PoW Miners / 35% DPoS Nodes / 30% CR'});
-    embed.setTimestamp();
+    .setURL('https://www.cyberrepublic.org/proposals/5fe404ea7b3b430078ea4866');
+    if (connection_ok) {
+      embed.addFields({name: 'Elastos Halving Countdown', value: `${days} days, ${hours} hours, ${minutes} minutes`});
+    } else {
+      embed.addFields({name: 'Elastos Halving Countdown', value: `${err_msg}`});
+    }
+    
+    embed.addFields({name: 'ELA emission', value: '**Until 12/2025**: 400 000 ELA / Year = ~1.52 ELA / 2 mins\n**Rewards are split**: 35% PoW Miners / 35% DPoS Nodes / 30% CR'});
+    //embed.setTimestamp();
     embed.setFooter({text: footer_text, iconURL: footer_img});
     
     //await interaction.reply({ embeds: [embed] });
     interaction.editReply({ embeds: [embed] });
-    
   } else if (commandName === 'bpos') {
     console.log(`${command_date} BPoS command triggered`);
     await interaction.deferReply();
     
     const bposBlocks = 1405000;
     const reqVotes = 80000;
-    const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
-    const height = await block.json();
     
+    //let dpos_count = 0;
+    //let dpos = {
+    //  method: 'listproducers',
+    //  params: {"state": "active", "identity":"v1"},
+    //};
     
-    let dpos_count = 0;
-    let dpos = {
-      method: 'listproducers',
-      params: {"state": "active", "identity":"v1"},
-    };
-    
-    const dpos_request = await fetch('https://api.trinity-tech.io/ela', {
-      method: 'POST',
-      body: JSON.stringify(dpos),
-      headers: {
-          'Content-Type': 'application/json'
-          // fyi, NO need for content length
-      }
-    })
-    .then(res => res.json())
-    .then(json => dpos_count = json.result.totalcounts)
-    .catch (err => console.log(err))
+    //const dpos_request = await fetch(api_bpos, {
+    // method: 'POST',
+    //  body: JSON.stringify(dpos),
+    //  headers: {
+    //      'Content-Type': 'application/json'
+    //      // fyi, NO need for content length
+    //  }
+    //})
+    //.then(res => res.json())
+    //.then(json => dpos_count = json.result.totalcounts)
+    //.catch (err => console.log(err))
     
     // BPoS
     let producers = "";
@@ -166,7 +181,7 @@ client.on('interactionCreate', async interaction => {
       params: {"state": "all", "identity":"v2"},
     };
     
-    const bpos_request = await fetch('https://api.trinity-tech.io/ela', {
+    const bpos_request = await fetch(api_bpos, {
       method: 'POST',
       body: JSON.stringify(bpos),
       headers: {
@@ -204,14 +219,6 @@ client.on('interactionCreate', async interaction => {
     
     bpos_count = bpos_count_80 + bpos_count_40 + bpos_count_20 + bpos_count_0
     
-    const blocksToGo = bposBlocks - parseInt(height.Result);
-    const secondsRemaining = blocksToGo * 2 * 60;
-    if (blocksToGo > 0) bpos_count = "?";
-    
-    let days = Math.floor(secondsRemaining / (60 * 60 * 24));
-    let hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
-    let minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
-
     // Send embeded message
     const embed = new MessageEmbed()
     .setColor(0x5BFFD0)
@@ -220,13 +227,16 @@ client.on('interactionCreate', async interaction => {
     .setURL('https://www.cyberrepublic.org/proposals/61cdad4cb5d3b6007833e15e');
     embed.addFields({name: 'Active BPoS nodes', value: `Total active: **${bpos_count}**\n80k+ votes: **${bpos_count_80}**\n40k+ votes: **${bpos_count_40}** (${bpos_count_80+bpos_count_40})\n20k+ votes: **${bpos_count_20}** (${bpos_count_80+bpos_count_40+bpos_count_20})\nLess than 20k+ votes: **${bpos_count_0}** (${bpos_count})`});
     embed.addFields({name: 'Inactive BPoS nodes', value: `Total inactive: **${bpos_count_inactive}**\n${bpos_inactive}`});
-    embed.addFields({name: 'DPoS 1.0 (old)', value: `Active nodes: **${dpos_count}**`});
-    if (blocksToGo < 0) {
-      embed.addFields({name: `BPoS Initiation`, value: `BPoS was initiated on block ${bposBlocks}`});
+    //embed.addFields({name: 'DPoS 1.0 (old)', value: `Active nodes: **${dpos_count}**`});
+    
+    height = await blockHeight();
+    if (connection_ok) {
+      block_height = parseInt(height.Result);
     } else {
-      embed.addFields({name: `BPoS Initiation Countdown (block ${bposBlocks})`, value: `${days} days, ${hours} hours, ${minutes} minutes`});
+      block_height = err_msg;
     }
-    embed.setTimestamp();
+    embed.addFields({name: `BPoS Initiation`, value: `BPoS was initiated on block ${bposBlocks}\nCurrent block: ${block_height}`});
+    //embed.setTimestamp();
     embed.setFooter({text: footer_text, iconURL: footer_img});
     
     //await interaction.reply({ embeds: [embed] });
@@ -242,122 +252,139 @@ client.on('interactionCreate', async interaction => {
     const transitionPeriod = 10080;
     let electionStateMsg = "";
     let transitionState = false;
-    const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
-    const height = await block.json();
-    const block_height = parseInt(height.Result);
-    //const block_height = 1447331;   
     
-    // Get election dates
-    const currentCouncilEnd = parseInt(firstCouncil)+(councilTerm*(Math.trunc((block_height-parseInt(firstCouncil))/parseInt(councilTerm))+1));
-    const currentCouncilStart = currentCouncilEnd - councilTerm;
-    let blocksToGo = currentCouncilEnd - block_height;
-    const secsCurrentCouncil = blocksToGo < 0 ? 0 : blocksToGo * 2 * 60;
-    let currentDays = Math.floor(secsCurrentCouncil / (60 * 60 * 24));
-    let currentHours = Math.floor((secsCurrentCouncil % (60 * 60 * 24)) / (60 * 60));
-    let currentMinutes = Math.floor((secsCurrentCouncil % (60 * 60)) / 60);
-    let currentSeconds = Math.floor(secsCurrentCouncil % 60);
+    let blocksToGo = 0;    
+    let currentCouncilEnd = 0;
+    let currentCouncilStart = 0;
+    let secsCurrentCouncil = 0;
+    let currentDays = 0;
+    let currentHours = 0;
+    let currentMinutes = 0;
+    let currentSeconds = 0;
     
-    if (blocksToGo <= transitionPeriod) {
-      transitionState = true;
-    }
-    
-    let electionClose = parseInt(firstCouncil)+(councilTerm*(Math.trunc((block_height-parseInt(firstCouncil))/parseInt(councilTerm))+1))-transitionPeriod;
-    let electionStart = electionClose - electionPeriod;
-    
-    if (block_height > electionStart && block_height < electionClose) {
-      blocksToGo = electionClose - block_height;
-      electionStatus = "Election Status";
-    } else {
-      if (!transitionState) {
-        blocksToGo = electionStart - block_height;
-      } else {
-        blocksToGo = currentCouncilEnd - block_height;
-        electionClose = currentCouncilEnd;
-        electionStart = electionClose - transitionPeriod;
-      }
-      electionStatus = "Election Results";
-    }
-    
-    const secondsRemaining = blocksToGo < 0 ? 0 : blocksToGo * 2 * 60;
-    let days = Math.floor(secondsRemaining / (60 * 60 * 24));
-    let hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
-    let minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
-    let seconds = Math.floor(secondsRemaining % 60);
-    
-    const crc = await fetch("https://node1.elaphant.app/api/v1/crc/rank/height/9999999999999?state=active");
-    const res = await crc.json();
-
-    let ranks = '';
-    let ranks2 = '';
-    let voted = '';
+    let electionClose = 0;
+    let electionStart = 0;
+    let ranks = "";
+    let ranks2 = "";
     let totalVotes = 0;
-
-    res.result.forEach((candidate) => {
-      // ranks = ranks + "{0:<20} {1}".format(key, value) + "\n"
-      let output = codes.filter(a => a.code == candidate.Location);      
+    let voted = "";
+    
+    height = await blockHeight();
+    
+    if (connection_ok) {        
+      block_height = parseInt(height.Result);
+      //const block_height = 1447331;   
       
-      if (candidate.Rank < 13) {
-        ranks += `**${candidate.Rank}.** ${candidate.Nickname} (${output[0].name}) *[web](${candidate.Url})* -- **${parseFloat(candidate.Votes).toLocaleString("en", {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        })}**` + "\n";
-      } else {
-        ranks2 += `**${candidate.Rank}.** ${candidate.Nickname} (${output[0].name}) *[web](${candidate.Url})* -- **${parseFloat(candidate.Votes).toLocaleString("en", {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        })}**` + "\n";
+      // Get election dates
+      currentCouncilEnd = parseInt(firstCouncil)+(councilTerm*(Math.trunc((block_height-parseInt(firstCouncil))/parseInt(councilTerm))+1));
+      currentCouncilStart = currentCouncilEnd - councilTerm;
+      blocksToGo = currentCouncilEnd - block_height;
+      secsCurrentCouncil = blocksToGo < 0 ? 0 : blocksToGo * 2 * 60;
+      currentDays = Math.floor(secsCurrentCouncil / (60 * 60 * 24));
+      currentHours = Math.floor((secsCurrentCouncil % (60 * 60 * 24)) / (60 * 60));
+      currentMinutes = Math.floor((secsCurrentCouncil % (60 * 60)) / 60);
+      currentSeconds = Math.floor(secsCurrentCouncil % 60);
+      
+      if (blocksToGo <= transitionPeriod) {
+        transitionState = true;
       }
       
-      totalVotes += parseFloat(candidate.Votes);
-      /*if (candidate.Rank === 12) {
-        ranks = ranks + "\n";
-      }*/
-    });
-    
-    voted += `***Total ELA voted -- ${new Intl.NumberFormat('en-US').format(totalVotes)}***`;
-    
-    if (ranks2.length > 1024) {
-      ranks2 = ranks2.substring(1, 1024);
+      electionClose = parseInt(firstCouncil)+(councilTerm*(Math.trunc((block_height-parseInt(firstCouncil))/parseInt(councilTerm))+1))-transitionPeriod;
+      electionStart = electionClose - electionPeriod;
+      
+      if (block_height > electionStart && block_height < electionClose) {
+        blocksToGo = electionClose - block_height;
+        electionStatus = "Election Status";
+      } else {
+        if (!transitionState) {
+          blocksToGo = electionStart - block_height;
+        } else {
+          blocksToGo = currentCouncilEnd - block_height;
+          electionClose = currentCouncilEnd;
+          electionStart = electionClose - transitionPeriod;
+        }
+        electionStatus = "Election Results";
+      }
+      
+      const secondsRemaining = blocksToGo < 0 ? 0 : blocksToGo * 2 * 60;
+      days = Math.floor(secondsRemaining / (60 * 60 * 24));
+      hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
+      minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
+      seconds =Math.floor(secondsRemaining % 60);
+      
+      const crc = await fetch(api_crc);
+      const res = await crc.json();
+
+      res.result.forEach((candidate) => {
+        // ranks = ranks + "{0:<20} {1}".format(key, value) + "\n"
+        let output = codes.filter(a => a.code == candidate.Location);      
+        
+        if (candidate.Rank < 13) {
+          ranks += `**${candidate.Rank}.** ${candidate.Nickname} (${output[0].name}) *[web](${candidate.Url})* -- **${parseFloat(candidate.Votes).toLocaleString("en", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          })}**` + "\n";
+        } else {
+          ranks2 += `**${candidate.Rank}.** ${candidate.Nickname} (${output[0].name}) *[web](${candidate.Url})* -- **${parseFloat(candidate.Votes).toLocaleString("en", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          })}**` + "\n";
+        }
+        
+        totalVotes += parseFloat(candidate.Votes);
+        /*if (candidate.Rank === 12) {
+          ranks = ranks + "\n";
+        }*/
+      });
+      
+      voted += `***Total ELA voted -- ${new Intl.NumberFormat('en-US').format(totalVotes)}***`;
+      
+      if (ranks2.length > 1024) {
+        ranks2 = ranks2.substring(1, 1024);
+      }
+
+      //ranks = ranks + `\n<b>Election close in ${blocksToGo} blocks</b>\n${days} days, ${hours} hours, ${minutes} minutes`;
+      //ranks = ranks + `\n<b>Election closed</b>\n${days} days, ${hours} hours, ${minutes} minutes`;
+
+      //ranks = ranks + `\n \nOnce the election concludes, please use /council to view the official results.`;
+      //See <a href="https://elanodes.com">elanodes</a> for more details.`;
+
+      //message.channel.send(ranks);
     }
-
-    //ranks = ranks + `\n<b>Election close in ${blocksToGo} blocks</b>\n${days} days, ${hours} hours, ${minutes} minutes`;
-    //ranks = ranks + `\n<b>Election closed</b>\n${days} days, ${hours} hours, ${minutes} minutes`;
-
-    //ranks = ranks + `\n \nOnce the election concludes, please use /council to view the official results.`;
-    //See <a href="https://elanodes.com">elanodes</a> for more details.`;
-
-    //message.channel.send(ranks);
     const embed = new MessageEmbed()
     .setColor(0x5BFFD0)
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Cyber Republic Council')
-    .setURL('https://www.cyberrepublic.org/council')
-    .addFields({name: electionStatus, value: ranks});
-    if (ranks2.length > 0) {
-      embed.addFields({name: '-----------------------------------------', value: ranks2});
-    }
-    embed.addFields({name: '-----------------------------------------', value: voted});
-    embed.addFields({name: 'Current CR Council', value: `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(currentCouncilStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**End:** Block height -- **${new Intl.NumberFormat('en-US').format(currentCouncilEnd)}**\n**End in:** ${currentDays} days, ${currentHours} hours, ${currentMinutes} minutes\n`});
-    
-    if (!transitionState) {
-      if (block_height > electionStart && block_height < electionClose) {
-        electionStateMsg = `CR Election in progress`;
-        electionStateTime = `**End in:** ${days} days, ${hours} hours, ${minutes} minutes`;
-        
-      } else {
-        electionStateMsg = `Next CR Council election`;
-        electionStateTime = `**Start in:** ${days} days, ${hours} hours, ${minutes} minutes`;
+    .setURL('https://www.cyberrepublic.org/council');
+    if (connection_ok) {      
+      embed.addFields({name: electionStatus, value: ranks});
+      if (ranks2.length > 0) {
+        embed.addFields({name: '-----------------------------------------', value: ranks2});
       }
+      embed.addFields({name: '-----------------------------------------', value: voted});
+      embed.addFields({name: 'Current CR Council', value: `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(currentCouncilStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**End:** Block height -- **${new Intl.NumberFormat('en-US').format(currentCouncilEnd)}**\n**End in:** ${currentDays} days, ${currentHours} hours, ${currentMinutes} minutes\n`});
+      
+      if (!transitionState) {
+        if (block_height > electionStart && block_height < electionClose) {
+          electionStateMsg = `CR Election in progress`;
+          electionStateTime = `**End in:** ${days} days, ${hours} hours, ${minutes} minutes`;
+          
+        } else {
+          electionStateMsg = `Next CR Council election`;
+          electionStateTime = `**Start in:** ${days} days, ${hours} hours, ${minutes} minutes`;
+        }
+      } else {
+        electionStateMsg = `Transition period`;
+        electionStateTime = `**End in:** ${days} days, ${hours} hours, ${minutes} minutes`;
+      }
+      
+      //console.log(`${block_height} > ${electionStart} && ${block_height} < ${electionClose}`);
+      
+      embed.addFields({name: `${electionStateMsg}`, value: `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(electionStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**End:** Block height -- **${new Intl.NumberFormat('en-US').format(electionClose)}**\n${electionStateTime}\n`});
     } else {
-      electionStateMsg = `Transition period`;
-      electionStateTime = `**End in:** ${days} days, ${hours} hours, ${minutes} minutes`;
+      embed.addFields({name: `CR Election`, value: err_msg});
     }
-    
-    //console.log(`${block_height} > ${electionStart} && ${block_height} < ${electionClose}`);
-    
-    embed.addFields({name: `${electionStateMsg}`, value: `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(electionStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**End:** Block height -- **${new Intl.NumberFormat('en-US').format(electionClose)}**\n${electionStateTime}\n`});
-        
-    embed.setTimestamp();
+    //embed.setTimestamp();
     embed.setFooter({text: footer_text, iconURL: footer_img});
     
     //await interaction.reply({ embeds: [embed] });
@@ -367,14 +394,14 @@ client.on('interactionCreate', async interaction => {
     console.log(`${command_date} Proposals command triggered`);
     await interaction.deferReply();
     
-    const res = await fetch("https://api.cyberrepublic.org/api/cvote/list_public?voteResult=all");
+    const res = await fetch(api_proposals);
     const proposalList = await res.json();
 
-    const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
-    const height = await block.json();
-
+    height = await blockHeight();
+    
     const active = proposalList.data.list.filter((item) => {
-      return item.proposedEndsHeight > height.Result && item.status === "PROPOSED";
+      return item.status === "PROPOSED";
+      //return item.proposedEndsHeight > height.Result && item.status === "PROPOSED";
       //return item.proposedEndsHeight < height.Result && item.status === "ACTIVE"; // test
     });
     
@@ -390,13 +417,16 @@ client.on('interactionCreate', async interaction => {
       active.reverse().forEach((item, index) => {
         index++;
         
-        const secondsRemaining =
-          parseFloat(item.proposedEndsHeight) - parseFloat(height.Result) < 0
-            ? 0
-            : (parseFloat(item.proposedEndsHeight) - parseFloat(height.Result)) * 2 * 60;
-        const days = Math.floor(secondsRemaining / (60 * 60 * 24));
-        const hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
-        const minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
+        let secondsRemaining = 0;
+        if (connection_ok) {
+          secondsRemaining =
+            parseFloat(item.proposedEndsHeight) - parseFloat(height.Result) < 0
+              ? 0
+              : (parseFloat(item.proposedEndsHeight) - parseFloat(height.Result)) * 2 * 60;
+        }
+        days = Math.floor(secondsRemaining / (60 * 60 * 24));
+        hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
+        minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
 
         embed.addFields(
           {name: `${index}. ${item.title}`, value: `[Link to proposal](https://www.cyberrepublic.org/proposals/${item._id})`},
@@ -455,7 +485,7 @@ client.on('interactionCreate', async interaction => {
       embed.addFields({name: "There are currently no proposals in the council voting period", value: "\u200b"});
     }
     
-    embed.setTimestamp();
+    //embed.setTimestamp();
     embed.setFooter({text: footer_text, iconURL: footer_img});
     //embed.setFooter(footer_text, footer_img);
     
@@ -531,158 +561,158 @@ let storedAlerts = {};
 client.on('ready', () => {
   if (loop === false) {
     loop = true;
+    let loop_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+    //console.log(`${loop_date} Loop - Started`);
+    //console.log('height.Result - ' + height.Result);
     
     setInterval(async () => {
-      const res = await fetch("https://api.cyberrepublic.org/api/cvote/list_public?voteResult=all");
+      const res = await fetch(api_proposals);
       const proposalList = await res.json();
+      
+      height = await blockHeight();
 
-      const block = await fetch("https://node1.elaphant.app/api/v1/block/height");
-      const height = await block.json();
-      
-      let loop_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-      //console.log(`${loop_date} Loop - Started`);
-      //console.log('height.Result - ' + height.Result);
-      
-      const active = proposalList.data.list.filter((item) => {
-        return item.proposedEndsHeight > height.Result && item.status === "PROPOSED";
-        //return item.proposedEndsHeight < height.Result && item.status === "ACTIVE"; // testing
-      });
-      
-      //console.log('active.length - ' + active.length);
-      
-      if (active.length > 0) {
-        active.forEach((item) => {
-          let support = 0;
-          let reject = 0;
-          let abstention = 0;
-          let undecided = 0;
-          let undecideds = [];
-          let unchained = [];
+      if (connection_ok) {
+        const active = proposalList.data.list.filter((item) => {
+          return item.proposedEndsHeight > height.Result && item.status === "PROPOSED";
+          //return item.proposedEndsHeight < height.Result && item.status === "ACTIVE"; // testing
+        });
+        
+        //console.log('active.length - ' + active.length);
+        
+        if (active.length > 0) {
+          active.forEach((item) => {
+            let support = 0;
+            let reject = 0;
+            let abstention = 0;
+            let undecided = 0;
+            let undecideds = [];
+            let unchained = [];
 
-          item.voteResult.forEach((vote) => {
-            if (vote.value === "support" && vote.status === "chained") support++;
-            if (vote.value === "reject" && vote.status === "chained") reject++;
-            if (vote.value === "undecided") {
-              undecided++;
-              undecideds.push(vote.votedBy);
+            item.voteResult.forEach((vote) => {
+              if (vote.value === "support" && vote.status === "chained") support++;
+              if (vote.value === "reject" && vote.status === "chained") reject++;
+              if (vote.value === "undecided") {
+                undecided++;
+                undecideds.push(vote.votedBy);
+              }
+              if (vote.value === "abstention" && vote.status === "chained") abstention++;
+              if (vote.value !== "undecided" && vote.status === "unchain") {
+                unchained.push(`${council[vote.votedBy]} voted ${vote.value} but did not chain the vote`);
+              }
+            });
+            
+            let voting_status = `✅  Support - **${support}**\n❌  Reject - **${reject}**\n🔘  Abstain - **${abstention}**\n⚠  Undecided - **${undecided}**\n\u200b`;
+            
+            let unchainedList = '';
+            if (unchained.length > 0) {
+              unchained.forEach((warning) => {
+                unchainedList += `${warning}\n`
+              });
             }
-            if (vote.value === "abstention" && vote.status === "chained") abstention++;
-            if (vote.value !== "undecided" && vote.status === "unchain") {
-              unchained.push(`${council[vote.votedBy]} voted ${vote.value} but did not chain the vote`);
+            let undecidedList = '';
+            let failedList = '';
+            if (undecideds.length !== 0) {
+              undecideds.forEach((member) => {
+                undecidedList += `${council[member]}\n`;
+                failedList += `${council[member]} ☹\n`;
+              });
+            };
+
+            let _message = "";
+            let description = "";
+            let show_unchained = false;
+            let show_undecided = true;
+            let show_failed = false;
+            
+            const blocksRemaining = item.proposedEndsHeight - height.Result;
+            //console.log("Blocks remaining: " + blocksRemaining);
+
+            if (blocksRemaining > 4990) {
+              if (storedAlerts[item._id] === 7) return;
+              description = '❇️ Whoa! A new proposal is now open for voting! 👀';
+              storedAlerts[item._id] = 7;
+            } else if (blocksRemaining < 3600 && blocksRemaining > 3550) {
+              if (storedAlerts[item._id] === 5) return;
+              description = '👌 Reminder! There are *5 days* remaining to vote on proposal';
+              storedAlerts[item._id] = 5;
+            } else if (blocksRemaining < 2160 && blocksRemaining > 2110) {
+              if (storedAlerts[item._id] === 3) return;
+              description = '👉 Hey you! 👈 There are *3 days* remaining to vote on proposal';
+              if (unchained.length > 0) show_unchained = true;
+              storedAlerts[item._id] = 3;
+            } else if (blocksRemaining < 720 && blocksRemaining > 670) {
+              if (storedAlerts[item._id] === 1) return;
+              description = '⚠ Warning! ⚠ There is only *1 day* remaining to vote on proposal';
+              if (unchained.length > 0) show_unchained = true;
+              storedAlerts[item._id] = 1;
+            } else if (blocksRemaining < 360 && blocksRemaining > 310) {
+              if (storedAlerts[item._id] === 0.5) return;
+              description = '‼ Alert! ‼ There are only *12 hours* remaining to vote on proposal';
+              if (unchained.length > 0) show_unchained = true;
+              storedAlerts[item._id] = 0.5;
+            } else if (blocksRemaining <= 7) {
+              if (storedAlerts[item._id] === 0) return;
+              description = '☠ The council voting period has elapsed for proposal';
+              if (unchained.length > 0) show_unchained = true;
+              show_failed = true;
+              show_undecided = false;
+              storedAlerts[item._id] = 0;
+            } else {
+              return;
             }
+
+            // Send embeded message
+            const embed = new MessageEmbed()
+            .setColor(0x5BFFD0)
+            .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
+            .setTitle(item.title)
+            .setURL(`https://www.cyberrepublic.org/proposals/${item._id}`)
+            //.setDescription(description)
+            .addFields(
+              {name: description, value: `__**Proposed by**__: ${item.proposedBy}`},
+              {name: "__Current voting status__", value: voting_status}
+            );
+            if (show_unchained) embed.addFields({name: "⚠ __Not Chained Yet__", value: unchainedList+'\u200b'});
+            if (show_undecided) {
+              if (undecidedList.length > 0) {
+                embed.addFields({name: '⚠ __Not Voted Yet__', value: undecidedList+'\u200b'});
+              } else {
+                embed.addFields({name: '✅ __Voting__', value: all_voted});
+              }
+            }
+            if (show_failed) {
+              if (failedList.length > 0) {
+                embed.addFields({name: "⛔️ __Failed to vote__", value: failedList+'\u200b'});
+              } else {
+                embed.addFields({name: "✅ __Voting__", value: all_voted});
+              }
+            }
+            //embed.setTimestamp();
+            embed.setFooter({text: footer_text, iconURL: footer_img});
+            
+            //message.channel.send({ embeds: [embed] });
+            client.channels.cache.get(channel_id).send({ embeds: [embed] });
+            loop_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+            console.log(`${loop_date} Loop - Automatic proposal message sent`);
           });
-          
-          let voting_status = `✅  Support - **${support}**\n❌  Reject - **${reject}**\n🔘  Abstain - **${abstention}**\n⚠  Undecided - **${undecided}**\n\u200b`;
-          
-          let unchainedList = '';
-          if (unchained.length > 0) {
-            unchained.forEach((warning) => {
-              unchainedList += `${warning}\n`
-            });
-          }
-          let undecidedList = '';
-          let failedList = '';
-          if (undecideds.length !== 0) {
-            undecideds.forEach((member) => {
-              undecidedList += `${council[member]}\n`;
-              failedList += `${council[member]} ☹\n`;
-            });
-          };
-
-          let _message = "";
-          let description = "";
-          let show_unchained = false;
-          let show_undecided = true;
-          let show_failed = false;
-          
-          const blocksRemaining = item.proposedEndsHeight - height.Result;
-          //console.log("Blocks remaining: " + blocksRemaining);
-
-          if (blocksRemaining > 4990) {
-            if (storedAlerts[item._id] === 7) return;
-            description = '❇️ Whoa! A new proposal is now open for voting! 👀';
-            storedAlerts[item._id] = 7;
-          } else if (blocksRemaining < 3600 && blocksRemaining > 3550) {
-            if (storedAlerts[item._id] === 5) return;
-            description = '👌 Reminder! There are *5 days* remaining to vote on proposal';
-            storedAlerts[item._id] = 5;
-          } else if (blocksRemaining < 2160 && blocksRemaining > 2110) {
-            if (storedAlerts[item._id] === 3) return;
-            description = '👉 Hey you! 👈 There are *3 days* remaining to vote on proposal';
-            if (unchained.length > 0) show_unchained = true;
-            storedAlerts[item._id] = 3;
-          } else if (blocksRemaining < 720 && blocksRemaining > 670) {
-            if (storedAlerts[item._id] === 1) return;
-            description = '⚠ Warning! ⚠ There is only *1 day* remaining to vote on proposal';
-            if (unchained.length > 0) show_unchained = true;
-            storedAlerts[item._id] = 1;
-          } else if (blocksRemaining < 360 && blocksRemaining > 310) {
-            if (storedAlerts[item._id] === 0.5) return;
-            description = '‼ Alert! ‼ There are only *12 hours* remaining to vote on proposal';
-            if (unchained.length > 0) show_unchained = true;
-            storedAlerts[item._id] = 0.5;
-          } else if (blocksRemaining <= 7) {
-            if (storedAlerts[item._id] === 0) return;
-            description = '☠ The council voting period has elapsed for proposal';
-            if (unchained.length > 0) show_unchained = true;
-            show_failed = true;
-            show_undecided = false;
-            storedAlerts[item._id] = 0;
-          } else {
-            return;
-          }
-
+        } else {
           // Send embeded message
           const embed = new MessageEmbed()
           .setColor(0x5BFFD0)
           .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
-          .setTitle(item.title)
-          .setURL(`https://www.cyberrepublic.org/proposals/${item._id}`)
-          //.setDescription(description)
-          .addFields(
-            {name: description, value: `__**Proposed by**__: ${item.proposedBy}`},
-            {name: "__Current voting status__", value: voting_status}
-          );
-          if (show_unchained) embed.addFields({name: "⚠ __Not Chained Yet__", value: unchainedList+'\u200b'});
-          if (show_undecided) {
-            if (undecidedList.length > 0) {
-              embed.addFields({name: '⚠ __Not Voted Yet__', value: undecidedList+'\u200b'});
-            } else {
-              embed.addFields({name: '✅ __Voting__', value: all_voted});
-            }
-          }
-          if (show_failed) {
-            if (failedList.length > 0) {
-              embed.addFields({name: "⛔️ __Failed to vote__", value: failedList+'\u200b'});
-            } else {
-              embed.addFields({name: "✅ __Voting__", value: all_voted});
-            }
-          }
-          embed.setTimestamp();
+          .setTitle('Cyber Republic - Proposals')
+          .setURL('https://www.cyberrepublic.org/proposals')
+          .addFields({name: "There are currently no proposals in the council voting period", value: "\u200b"});
+          //embed.setTimestamp();
           embed.setFooter({text: footer_text, iconURL: footer_img});
           
-          //message.channel.send({ embeds: [embed] });
-          client.channels.cache.get(channel_id).send({ embeds: [embed] });
-          loop_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-          console.log(`${loop_date} Loop - Automatic proposal message sent`);
-        });
-      } else {
-        // Send embeded message
-        const embed = new MessageEmbed()
-        .setColor(0x5BFFD0)
-        .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
-        .setTitle('Cyber Republic - Proposals')
-        .setURL('https://www.cyberrepublic.org/proposals')
-        .addFields({name: "There are currently no proposals in the council voting period", value: "\u200b"});
-        embed.setTimestamp();
-        embed.setFooter({text: footer_text, iconURL: footer_img});
-        
-        // disabled upon request 30.12.2021
-        //client.channels.cache.get(channel_id).send({ embeds: [embed] });
-        console.log(`${loop_date} Loop - No proposals active`);
+          // disabled upon request 30.12.2021
+          //client.channels.cache.get(channel_id).send({ embeds: [embed] });
+          console.log(`${loop_date} Loop - No proposals active`);
+        }
+        //loop_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+        //console.log(`${loop_date} Loop - Finished`);
       }
-      //loop_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-      //console.log(`${loop_date} Loop - Finished`);
     }, check_interval);
   } else {
     console.log('Loop already running');
@@ -691,3 +721,31 @@ client.on('ready', () => {
 
 // Login to Discord with your client's token
 client.login(token);
+
+async function fetchWithTimeout(resource, options = {}) {
+  const { timeout = 8000 } = options;
+  
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+
+  const response = await fetch(resource, {
+    ...options,
+    signal: controller.signal  
+  });
+  clearTimeout(id);
+  
+  return response;
+}
+
+async function blockHeight() {
+  try {
+    const response = await fetchWithTimeout(api_height, {
+      timeout: 6000
+    });
+    const height = await response.json();
+    return height;
+  } catch (error) {
+    connection_ok = false;
+    //console.log(`Error: ${error.name}`);
+  }
+}
