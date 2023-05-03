@@ -4,11 +4,11 @@ const { Routes } = require('discord-api-types/v9');
 const { clientId, guildId, token } = require('./config.json');
 
 const commands = [
-	new SlashCommandBuilder().setName('ping-cr-bot').setDescription('Shows if CR Bot is running'),
-	new SlashCommandBuilder().setName('bpos').setDescription('Shows information about BPoS activation'),
-  new SlashCommandBuilder().setName('halving').setDescription('Shows countdown to next Elastos halving'),
-	new SlashCommandBuilder().setName('election').setDescription('Shows current CR election status'),
-	new SlashCommandBuilder().setName('proposals').setDescription('Shows current proposals in the council voting period'),
+	new SlashCommandBuilder().setName('ping-cr-bot').setDescription('Show status of CR Bot'),
+	new SlashCommandBuilder().setName('bpos').setDescription('Show BPoS information'),
+  new SlashCommandBuilder().setName('halving').setDescription('Show Elastos halving information'),
+	new SlashCommandBuilder().setName('election').setDescription('Show CR election status'),
+	new SlashCommandBuilder().setName('proposals').setDescription('Show proposals in the CR council voting period'),
 ]
 	.map(command => command.toJSON());
 

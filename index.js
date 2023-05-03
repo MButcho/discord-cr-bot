@@ -10,11 +10,8 @@ if (dev) check_mins = 0.1;
 let check_interval = check_mins * 60 * 1000;
 
 // basic variables
-const ver = "v1.5.1";
-const api_height_1 = "https://api.elastos.io/ela";
-const api_height_2 = "https://node1.elaphant.app/api/v1/block/height";
-const api_crc = "https://node1.elaphant.app/api/v1/crc/rank/height/9999999999999?state=active";
-const api_bpos = "https://api.trinity-tech.io/ela";
+const ver = "v1.5.2";
+const api_official = "https://api.elastos.io/ela";
 const api_proposals = "https://api.cyberrepublic.org/api/cvote/list_public?voteResult=all";
 let connection_ok = true;
 const err_msg = "API is currently in down, please try again later ...";
@@ -59,7 +56,7 @@ const council = {
   "5d14716f43816e009415219b": "PG BAO",
 };
 
-const footer_text = `Support CR Bot ${ver} creator via EXwQKQW6DZ9ZMH1EwU1cM6JR9tAdtNkgTW`;
+const footer_text = `Support CR Bot ${ver} creator via EJfW2mCdZPVxHVEv891xDop7hJAsYbKH5R`;
 const footer_img = 'https://i.postimg.cc/660rjMR1/avatar-laser-blue.png';
 
 // When the client is ready
@@ -182,7 +179,7 @@ client.on('interactionCreate', async interaction => {
       params: {"state": "all", "identity":"v2"},
     };
     
-    const bpos_request = await fetch(api_bpos, {
+    const bpos_request = await fetch(api_official, {
       method: 'POST',
       body: JSON.stringify(bpos),
       headers: {
@@ -265,8 +262,8 @@ client.on('interactionCreate', async interaction => {
     
     let electionClose = 0;
     let electionStart = 0;
+    let crcs = "";
     let ranks = "";
-    let ranks2 = "";
     let totalVotes = 0;
     let voted = "";
     
@@ -313,44 +310,45 @@ client.on('interactionCreate', async interaction => {
       minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
       seconds =Math.floor(secondsRemaining % 60);
       
-      const crc = await fetch(api_crc);
-      const res = await crc.json();
-
-      res.result.forEach((candidate) => {
-        // ranks = ranks + "{0:<20} {1}".format(key, value) + "\n"
-        let output = codes.filter(a => a.code == candidate.Location);      
+      const crc = await getCRCs("listcurrentcrs");
+      crc.crmembersinfo.forEach((candidate) => {
+        // crcs = crcs + "{0:<20} {1}".format(key, value) + "\n"
+        let output = codes.filter(a => a.code == candidate.location);      
         
-        if (candidate.Rank < 13) {
-          ranks += `**${candidate.Rank}.** ${candidate.Nickname} (${output[0].name}) *[web](${candidate.Url})* -- **${parseFloat(candidate.Votes).toLocaleString("en", {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-          })}**` + "\n";
-        } else {
-          ranks2 += `**${candidate.Rank}.** ${candidate.Nickname} (${output[0].name}) *[web](${candidate.Url})* -- **${parseFloat(candidate.Votes).toLocaleString("en", {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-          })}**` + "\n";
-        }
-        
-        totalVotes += parseFloat(candidate.Votes);
+        crcs += `**${candidate.index+1}.** ${candidate.nickname} (${output[0].name}) *[web](${candidate.url})*\n`;
+      
         /*if (candidate.Rank === 12) {
-          ranks = ranks + "\n";
+          crcs = crcs + "\n";
         }*/
       });
       
+      const candidates = await getCRCs("listcrcandidates");
+      if (candidates.totalcounts > 0) {
+        crc.crcandidatesinfo.forEach((candidate) => {
+          // crcs = crcs + "{0:<20} {1}".format(key, value) + "\n"
+          let output = codes.filter(a => a.code == candidate.location);      
+          
+          ranks += `**${candidate.index+1}.** ${candidate.nickname} (${output[0].name}) *[web](${candidate.url})* -- **${parseFloat(candidate.Votes).toLocaleString("en", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          })}**` + "\n";
+        
+          totalVotes += parseFloat(candidate.votes);
+          /*if (candidate.Rank === 12) {
+            crcs = crcs + "\n";
+          }*/
+        });
+      } else {
+        ranks = "No candidate available yet";
+      }
+      
+      
+      
       voted += `***Total ELA voted -- ${new Intl.NumberFormat('en-US').format(totalVotes)}***`;
       
-      if (ranks2.length > 1024) {
-        ranks2 = ranks2.substring(1, 1024);
+      if (ranks.length > 1024) {
+        ranks = ranks.substring(1, 1024);
       }
-
-      //ranks = ranks + `\n<b>Election close in ${blocksToGo} blocks</b>\n${days} days, ${hours} hours, ${minutes} minutes`;
-      //ranks = ranks + `\n<b>Election closed</b>\n${days} days, ${hours} hours, ${minutes} minutes`;
-
-      //ranks = ranks + `\n \nOnce the election concludes, please use /council to view the official results.`;
-      //See <a href="https://elanodes.com">elanodes</a> for more details.`;
-
-      //message.channel.send(ranks);
     }
     const embed = new MessageEmbed()
     .setColor(0x5BFFD0)
@@ -358,10 +356,8 @@ client.on('interactionCreate', async interaction => {
     .setTitle('Cyber Republic Council')
     .setURL('https://www.cyberrepublic.org/council');
     if (connection_ok) {      
+      embed.addFields({name: `Current CR council`, value: crcs});
       embed.addFields({name: electionStatus, value: ranks});
-      if (ranks2.length > 0) {
-        embed.addFields({name: '-----------------------------------------', value: ranks2});
-      }
       embed.addFields({name: '-----------------------------------------', value: voted});
       embed.addFields({name: 'Current CR Council', value: `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(currentCouncilStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**End:** Block height -- **${new Intl.NumberFormat('en-US').format(currentCouncilEnd)}**\n**End in:** ${currentDays} days, ${currentHours} hours, ${currentMinutes} minutes\n`});
       
@@ -743,7 +739,7 @@ async function blockHeight() {
     method: 'getcurrentheight'      
   };
   
-  const height_request = await fetchWithTimeout(api_height_1, {
+  const height_request = await fetchWithTimeout(api_official, {
     timeout: 6000,
     method: 'POST',
     body: JSON.stringify(height_params),
@@ -753,13 +749,11 @@ async function blockHeight() {
   })
   .then(res => res.json())
   .then(json => height = json.result)
-  .catch (err => {
-    height = blockHeightFO();    
-  });
+  .catch (err => console.log("Error in getcurrentheight"));
   return height;
 }
 
-async function blockHeightFO() {
+/*async function blockHeightFO() {
   try {
     const response = await fetchWithTimeout(api_height_2, {
       timeout: 6000
@@ -770,4 +764,23 @@ async function blockHeightFO() {
     connection_ok = false;
     //console.log(`Error: ${error.name}`);
   }
+}*/
+
+async function getCRCs(type) {
+  let crc_params = {
+    method: type      
+  };
+  
+  const crc_request = await fetchWithTimeout(api_official, {
+    timeout: 6000,
+    method: 'POST',
+    body: JSON.stringify(crc_params),
+    headers: {
+        'Content-Type': 'application/json'
+    }
+  })
+  .then(res => res.json())
+  .then(json => crc = json.result)
+  .catch (err => console.log(`Error in ${type}`));
+  return crc;
 }
