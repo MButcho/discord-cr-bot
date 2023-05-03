@@ -10,8 +10,9 @@ if (dev) check_mins = 0.1;
 let check_interval = check_mins * 60 * 1000;
 
 // basic variables
-const ver = "v1.5.0";
-const api_height = "https://node1.elaphant.app/api/v1/block/height";
+const ver = "v1.5.1";
+const api_height_1 = "https://api.elastos.io/ela";
+const api_height_2 = "https://node1.elaphant.app/api/v1/block/height";
 const api_crc = "https://node1.elaphant.app/api/v1/crc/rank/height/9999999999999?state=active";
 const api_bpos = "https://api.trinity-tech.io/ela";
 const api_proposals = "https://api.cyberrepublic.org/api/cvote/list_public?voteResult=all";
@@ -115,9 +116,9 @@ client.on('interactionCreate', async interaction => {
     
     if (connection_ok) {
       // Get next halving block
-      let halvingBlock = halvingBlocks*(Math.trunc(parseInt(height.Result)/halvingBlocks)+1);
+      let halvingBlock = halvingBlocks*(Math.trunc(parseInt(height)/halvingBlocks)+1);
       
-      const blocksToGo = halvingBlock - parseInt(height.Result);
+      const blocksToGo = halvingBlock - parseInt(height);
       const secondsRemaining = blocksToGo * 2 * 60;
 
       days = Math.floor(secondsRemaining / (60 * 60 * 24));
@@ -231,7 +232,7 @@ client.on('interactionCreate', async interaction => {
     
     height = await blockHeight();
     if (connection_ok) {
-      block_height = parseInt(height.Result);
+      block_height = parseInt(height);
     } else {
       block_height = err_msg;
     }
@@ -272,7 +273,7 @@ client.on('interactionCreate', async interaction => {
     height = await blockHeight();
     
     if (connection_ok) {        
-      block_height = parseInt(height.Result);
+      block_height = parseInt(height);
       //const block_height = 1447331;   
       
       // Get election dates
@@ -401,8 +402,8 @@ client.on('interactionCreate', async interaction => {
     
     const active = proposalList.data.list.filter((item) => {
       return item.status === "PROPOSED";
-      //return item.proposedEndsHeight > height.Result && item.status === "PROPOSED";
-      //return item.proposedEndsHeight < height.Result && item.status === "ACTIVE"; // test
+      //return item.proposedEndsHeight > height && item.status === "PROPOSED";
+      //return item.proposedEndsHeight < height && item.status === "ACTIVE"; // test
     });
     
     const embed = new MessageEmbed()
@@ -420,9 +421,9 @@ client.on('interactionCreate', async interaction => {
         let secondsRemaining = 0;
         if (connection_ok) {
           secondsRemaining =
-            parseFloat(item.proposedEndsHeight) - parseFloat(height.Result) < 0
+            parseFloat(item.proposedEndsHeight) - parseFloat(height) < 0
               ? 0
-              : (parseFloat(item.proposedEndsHeight) - parseFloat(height.Result)) * 2 * 60;
+              : (parseFloat(item.proposedEndsHeight) - parseFloat(height)) * 2 * 60;
         }
         days = Math.floor(secondsRemaining / (60 * 60 * 24));
         hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
@@ -563,18 +564,18 @@ client.on('ready', () => {
     loop = true;
     let loop_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
     //console.log(`${loop_date} Loop - Started`);
-    //console.log('height.Result - ' + height.Result);
+    //console.log('height - ' + height);
     
     setInterval(async () => {
       const res = await fetch(api_proposals);
       const proposalList = await res.json();
       
       height = await blockHeight();
-
+      
       if (connection_ok) {
         const active = proposalList.data.list.filter((item) => {
-          return item.proposedEndsHeight > height.Result && item.status === "PROPOSED";
-          //return item.proposedEndsHeight < height.Result && item.status === "ACTIVE"; // testing
+          return item.proposedEndsHeight > height && item.status === "PROPOSED";
+          //return item.proposedEndsHeight < height && item.status === "ACTIVE"; // testing
         });
         
         //console.log('active.length - ' + active.length);
@@ -624,7 +625,7 @@ client.on('ready', () => {
             let show_undecided = true;
             let show_failed = false;
             
-            const blocksRemaining = item.proposedEndsHeight - height.Result;
+            const blocksRemaining = item.proposedEndsHeight - height;
             //console.log("Blocks remaining: " + blocksRemaining);
 
             if (blocksRemaining > 4990) {
@@ -708,7 +709,7 @@ client.on('ready', () => {
           
           // disabled upon request 30.12.2021
           //client.channels.cache.get(channel_id).send({ embeds: [embed] });
-          console.log(`${loop_date} Loop - No proposals active`);
+          console.log(`${loop_date} Loop - No proposals active [${height}]`);
         }
         //loop_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
         //console.log(`${loop_date} Loop - Finished`);
@@ -727,7 +728,7 @@ async function fetchWithTimeout(resource, options = {}) {
   
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
-
+  
   const response = await fetch(resource, {
     ...options,
     signal: controller.signal  
@@ -738,12 +739,33 @@ async function fetchWithTimeout(resource, options = {}) {
 }
 
 async function blockHeight() {
+  let height_params = {
+    method: 'getcurrentheight'      
+  };
+  
+  const height_request = await fetchWithTimeout(api_height_1, {
+    timeout: 6000,
+    method: 'POST',
+    body: JSON.stringify(height_params),
+    headers: {
+        'Content-Type': 'application/json'
+    }
+  })
+  .then(res => res.json())
+  .then(json => height = json.result)
+  .catch (err => {
+    height = blockHeightFO();    
+  });
+  return height;
+}
+
+async function blockHeightFO() {
   try {
-    const response = await fetchWithTimeout(api_height, {
+    const response = await fetchWithTimeout(api_height_2, {
       timeout: 6000
     });
     const height = await response.json();
-    return height;
+    return height.Result;
   } catch (error) {
     connection_ok = false;
     //console.log(`Error: ${error.name}`);
