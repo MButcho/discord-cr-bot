@@ -6,11 +6,15 @@ const request = require('request');
 const fetch = require('node-fetch');
 let loop = false;
 let check_mins = 5;
-if (dev) check_mins = 0.1;
+let show_date = false;
+if (dev) {
+  check_mins = 0.1;
+  show_date = true;
+}
 let check_interval = check_mins * 60 * 1000;
 
 // basic variables
-const ver = "v1.5.2";
+const ver = "v1.5.3";
 const api_official = "https://api.elastos.io/ela";
 const api_proposals = "https://api.cyberrepublic.org/api/cvote/list_public?voteResult=all";
 let connection_ok = true;
@@ -61,7 +65,7 @@ const footer_img = 'https://i.postimg.cc/660rjMR1/avatar-laser-blue.png';
 
 // When the client is ready
 client.once('ready', () => {
-  console.log(`${start_date} Logged in as ${client.user.tag} on ${ver}`);
+  console.log((show_date ? start_date + " ":"") + `Logged in as ${client.user.tag} on ${ver}`);
 });
 
 // Run commands
@@ -75,13 +79,15 @@ client.on('interactionCreate', async interaction => {
   
   const { commandName } = interaction;
 
-  if (commandName === 'ping-cr-bot') {
-    console.log(`${command_date} Ping command triggered`);
+  if (commandName === 'ping') {
+    console.log((show_date ? command_date + " ":"") + `Ping command triggered`);
     await interaction.deferReply();
     
     days = Math.floor(seconds_since_start / (60 * 60 * 24));
     hours = Math.floor((seconds_since_start % (60 * 60 * 24)) / (60 * 60));
     minutes = Math.floor((seconds_since_start % (60 * 60)) / 60);
+    
+    height = await blockHeight();
     
     // calculate next loop run
     let next_loop_round = Math.trunc((parseInt(seconds_since_start)/60)/check_mins)+1;
@@ -97,7 +103,7 @@ client.on('interactionCreate', async interaction => {
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Cyber Republic - Proposals')
     .setURL('https://www.cyberrepublic.org/proposals')
-    .addFields({name: `Bot running for:`, value: `${days} days, ${hours} hours, ${minutes} minutes\n\n**Next automatic proposals check:** ${next_loop_mins}:${next_loop_secs} mins\n**Bot start:** ${start_date} UTC\n**Source code:** [CR Discord Bot ${ver}](https://github.com/MButcho/discord-cr-bot)\n\u200b`});
+    .addFields({name: `Bot running for:`, value: `${days} days, ${hours} hours, ${minutes} minutes\n\n**Next automatic proposals check:** ${next_loop_mins}:${next_loop_secs} mins\n**Bot start:** ${start_date} UTC\n**Elastos block height:** ${height}\n**Source code:** [CR Discord Bot ${ver}](https://github.com/MButcho/discord-cr-bot)\n\u200b`});
     //embed.setTimestamp();
     embed.setFooter({text: footer_text, iconURL: footer_img});
     
@@ -105,7 +111,7 @@ client.on('interactionCreate', async interaction => {
     interaction.editReply({ embeds: [embed] });
       
   } else if (commandName === 'halving') {
-    console.log(`${command_date} Halving command triggered`);
+    console.log((show_date ? command_date + " ":"") + `Halving command triggered`);
     await interaction.deferReply();
     
     const halvingBlocks = 1051200;
@@ -142,7 +148,7 @@ client.on('interactionCreate', async interaction => {
     //await interaction.reply({ embeds: [embed] });
     interaction.editReply({ embeds: [embed] });
   } else if (commandName === 'bpos') {
-    console.log(`${command_date} BPoS command triggered`);
+    console.log((show_date ? command_date + " ":"") + `BPoS command triggered`);
     await interaction.deferReply();
     
     const bposBlocks = 1405000;
@@ -241,7 +247,7 @@ client.on('interactionCreate', async interaction => {
     interaction.editReply({ embeds: [embed] });
     
   } else if (commandName === 'election') {
-    console.log(`${command_date} Election command triggered`);
+    console.log((show_date ? command_date + " ":"") + `Election command triggered`);
     await interaction.deferReply();
     
     const councilTerm = 262800;
@@ -252,17 +258,9 @@ client.on('interactionCreate', async interaction => {
     let transitionState = false;
     
     let blocksToGo = 0;    
-    let currentCouncilEnd = 0;
-    let currentCouncilStart = 0;
-    let secsCurrentCouncil = 0;
-    let currentDays = 0;
-    let currentHours = 0;
-    let currentMinutes = 0;
-    let currentSeconds = 0;
     
     let electionClose = 0;
     let electionStart = 0;
-    let crcs = "";
     let ranks = "";
     let totalVotes = 0;
     let voted = "";
@@ -271,22 +269,9 @@ client.on('interactionCreate', async interaction => {
     
     if (connection_ok) {        
       block_height = parseInt(height);
-      //const block_height = 1447331;   
+      //block_height = 1447331;   
       
       // Get election dates
-      currentCouncilEnd = parseInt(firstCouncil)+(councilTerm*(Math.trunc((block_height-parseInt(firstCouncil))/parseInt(councilTerm))+1));
-      currentCouncilStart = currentCouncilEnd - councilTerm;
-      blocksToGo = currentCouncilEnd - block_height;
-      secsCurrentCouncil = blocksToGo < 0 ? 0 : blocksToGo * 2 * 60;
-      currentDays = Math.floor(secsCurrentCouncil / (60 * 60 * 24));
-      currentHours = Math.floor((secsCurrentCouncil % (60 * 60 * 24)) / (60 * 60));
-      currentMinutes = Math.floor((secsCurrentCouncil % (60 * 60)) / 60);
-      currentSeconds = Math.floor(secsCurrentCouncil % 60);
-      
-      if (blocksToGo <= transitionPeriod) {
-        transitionState = true;
-      }
-      
       electionClose = parseInt(firstCouncil)+(councilTerm*(Math.trunc((block_height-parseInt(firstCouncil))/parseInt(councilTerm))+1))-transitionPeriod;
       electionStart = electionClose - electionPeriod;
       
@@ -304,31 +289,23 @@ client.on('interactionCreate', async interaction => {
         electionStatus = "Election Results";
       }
       
+      if (blocksToGo <= transitionPeriod) {
+        transitionState = true;
+      }
+      
       const secondsRemaining = blocksToGo < 0 ? 0 : blocksToGo * 2 * 60;
       days = Math.floor(secondsRemaining / (60 * 60 * 24));
       hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
       minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
       seconds =Math.floor(secondsRemaining % 60);
       
-      const crc = await getCRCs("listcurrentcrs");
-      crc.crmembersinfo.forEach((candidate) => {
-        // crcs = crcs + "{0:<20} {1}".format(key, value) + "\n"
-        let output = codes.filter(a => a.code == candidate.location);      
-        
-        crcs += `**${candidate.index+1}.** ${candidate.nickname} (${output[0].name}) *[web](${candidate.url})*\n`;
-      
-        /*if (candidate.Rank === 12) {
-          crcs = crcs + "\n";
-        }*/
-      });
-      
       const candidates = await getCRCs("listcrcandidates");
       if (candidates.totalcounts > 0) {
-        crc.crcandidatesinfo.forEach((candidate) => {
+        candidates.crcandidatesinfo.forEach((candidate) => {
           // crcs = crcs + "{0:<20} {1}".format(key, value) + "\n"
           let output = codes.filter(a => a.code == candidate.location);      
           
-          ranks += `**${candidate.index+1}.** ${candidate.nickname} (${output[0].name}) *[web](${candidate.url})* -- **${parseFloat(candidate.Votes).toLocaleString("en", {
+          ranks += `**${candidate.index+1}.** ${candidate.nickname} (${output[0].name}) *[web](${candidate.url})* -- **${parseFloat(candidate.votes).toLocaleString("en", {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
           })}**` + "\n";
@@ -342,8 +319,6 @@ client.on('interactionCreate', async interaction => {
         ranks = "No candidate available yet";
       }
       
-      
-      
       voted += `***Total ELA voted -- ${new Intl.NumberFormat('en-US').format(totalVotes)}***`;
       
       if (ranks.length > 1024) {
@@ -356,11 +331,8 @@ client.on('interactionCreate', async interaction => {
     .setTitle('Cyber Republic Council')
     .setURL('https://www.cyberrepublic.org/council');
     if (connection_ok) {      
-      embed.addFields({name: `Current CR council`, value: crcs});
       embed.addFields({name: electionStatus, value: ranks});
       embed.addFields({name: '-----------------------------------------', value: voted});
-      embed.addFields({name: 'Current CR Council', value: `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(currentCouncilStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**End:** Block height -- **${new Intl.NumberFormat('en-US').format(currentCouncilEnd)}**\n**End in:** ${currentDays} days, ${currentHours} hours, ${currentMinutes} minutes\n`});
-      
       if (!transitionState) {
         if (block_height > electionStart && block_height < electionClose) {
           electionStateMsg = `CR Election in progress`;
@@ -387,8 +359,68 @@ client.on('interactionCreate', async interaction => {
     //await interaction.reply({ embeds: [embed] });
     interaction.editReply({ embeds: [embed] });
     
+  } else if (commandName === 'council') {
+    console.log((show_date ? command_date + " ":"") + `Council command triggered`);
+    await interaction.deferReply();
+    
+    const councilTerm = 262800;
+    const firstCouncil = 658930;
+    let electionStateMsg = "";
+    
+    let blocksToGo = 0;    
+    let currentCouncilEnd = 0;
+    let currentCouncilStart = 0;
+    let secsCurrentCouncil = 0;
+    let days = 0;
+    let hours = 0;
+    let minutes = 0;
+    let seconds = 0;
+    let crcs = "";
+    
+    height = await blockHeight();
+    
+    if (connection_ok) {        
+      block_height = parseInt(height);
+      //block_height = 1447331;   
+      
+      // Get election dates
+      currentCouncilEnd = parseInt(firstCouncil)+(councilTerm*(Math.trunc((block_height-parseInt(firstCouncil))/parseInt(councilTerm))+1));
+      currentCouncilStart = currentCouncilEnd - councilTerm;
+      blocksToGo = currentCouncilEnd - block_height;
+      secsCurrentCouncil = blocksToGo < 0 ? 0 : blocksToGo * 2 * 60;
+      days = Math.floor(secsCurrentCouncil / (60 * 60 * 24));
+      hours = Math.floor((secsCurrentCouncil % (60 * 60 * 24)) / (60 * 60));
+      minutes = Math.floor((secsCurrentCouncil % (60 * 60)) / 60);
+      seconds = Math.floor(secsCurrentCouncil % 60);
+      
+      const crc = await getCRCs("listcurrentcrs");
+      crc.crmembersinfo.forEach((candidate) => {
+        // crcs = crcs + "{0:<20} {1}".format(key, value) + "\n"
+        let output = codes.filter(a => a.code == candidate.location);      
+        
+        crcs += `**${candidate.index+1}.** ${candidate.nickname} (${output[0].name}) *[web](${candidate.url})*\n`;
+      });
+      
+    }
+    const embed = new MessageEmbed()
+    .setColor(0x5BFFD0)
+    .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
+    .setTitle('Cyber Republic Council')
+    .setURL('https://www.cyberrepublic.org/council');
+    if (connection_ok) {      
+      embed.addFields({name: `Current CR council`, value: crcs});
+      embed.addFields({name: 'Current CR Council', value: `**Start:** Block height -- **${new Intl.NumberFormat('en-US').format(currentCouncilStart)}**\n**Current:** Block height -- **${new Intl.NumberFormat('en-US').format(block_height)}**\n**End:** Block height -- **${new Intl.NumberFormat('en-US').format(currentCouncilEnd)}**\n**End in:** ${days} days, ${hours} hours, ${minutes} minutes\n`});
+    } else {
+      embed.addFields({name: `CR Election`, value: err_msg});
+    }
+    //embed.setTimestamp();
+    embed.setFooter({text: footer_text, iconURL: footer_img});
+    
+    //await interaction.reply({ embeds: [embed] });
+    interaction.editReply({ embeds: [embed] });
+    
   } else if (commandName === 'proposals') {
-    console.log(`${command_date} Proposals command triggered`);
+    console.log((show_date ? command_date + " ":"") + `Proposals command triggered`);
     await interaction.deferReply();
     
     const res = await fetch(api_proposals);
@@ -498,7 +530,7 @@ client.on('interactionCreate', async interaction => {
     
   // old /ping response
   if(message.content.toLowerCase().startsWith('/ping') || message.content.toLowerCase().startsWith('!ping')) {
-    console.log(`${command_date} Ping command triggered`);
+    console.log((show_date ? command_date + " ":"") + `Ping command triggered`);
     
     // Send embeded message
     const embed = new MessageEmbed()
@@ -516,7 +548,7 @@ client.on('interactionCreate', async interaction => {
     
   // council response
   /*if(message.content.toLowerCase().includes('/council')) {
-    console.log(`${command_date} Council command triggered`);
+    console.log((show_date ? command_date + " ":"") + `Council command triggered`);
 
     const headers = {
       "content-type": "application/json;",
@@ -690,7 +722,7 @@ client.on('ready', () => {
             //message.channel.send({ embeds: [embed] });
             client.channels.cache.get(channel_id).send({ embeds: [embed] });
             loop_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-            console.log(`${loop_date} Loop - Automatic proposal message sent`);
+            console.log((show_date ? loop_date + " ":"") + `Loop - Automatic proposal message sent`);
           });
         } else {
           // Send embeded message
@@ -705,7 +737,7 @@ client.on('ready', () => {
           
           // disabled upon request 30.12.2021
           //client.channels.cache.get(channel_id).send({ embeds: [embed] });
-          console.log(`${loop_date} Loop - No proposals active [${height}]`);
+          console.log((show_date ? loop_date + " ":"") + `Loop - No proposals active [${height}]`);
         }
         //loop_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
         //console.log(`${loop_date} Loop - Finished`);
