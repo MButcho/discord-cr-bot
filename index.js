@@ -289,7 +289,7 @@ client.on('interactionCreate', async interaction => {
         electionStatus = "Election Results";
       }
       
-      if (blocksToGo <= transitionPeriod) {
+      if (blocksToGo+transitionPeriod <= transitionPeriod) {
         transitionState = true;
       }
       
@@ -737,10 +737,10 @@ client.on('ready', () => {
           
           // disabled upon request 30.12.2021
           //client.channels.cache.get(channel_id).send({ embeds: [embed] });
-          console.log((show_date ? loop_date + " ":"") + `Loop - No proposals active [${height}]`);
+          //console.log((show_date ? loop_date + " ":"") + `Loop - No proposals active [${height}]`);
         }
         //loop_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-        //console.log(`${loop_date} Loop - Finished`);
+        console.log((show_date ? loop_date + " ":"") + `Loop - Finished, active proposals [${active.length}], height [${height}]`);
       }
     }, check_interval);
   } else {
