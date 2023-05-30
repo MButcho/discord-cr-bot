@@ -14,7 +14,7 @@ if (dev) {
 let check_interval = check_mins * 60 * 1000;
 
 // basic variables
-const ver = "v1.5.3";
+const ver = "v1.5.4";
 const api_official = "https://api.elastos.io/ela";
 const api_proposals = "https://api.cyberrepublic.org/api/cvote/list_public?voteResult=all";
 let connection_ok = true;
@@ -269,12 +269,14 @@ client.on('interactionCreate', async interaction => {
     
     if (connection_ok) {        
       block_height = parseInt(height);
-      //block_height = 1447331;   
+      //block_height = 1437249;
       
       // Get election dates
       electionClose = parseInt(firstCouncil)+(councilTerm*(Math.trunc((block_height-parseInt(firstCouncil))/parseInt(councilTerm))+1))-transitionPeriod;
       electionStart = electionClose - electionPeriod;
       
+      if (block_height >= electionClose && block_height <= electionClose+transitionPeriod) transitionState = true; // if transition period
+      //console.log(block_height, electionClose, block_height , electionClose+transitionPeriod, transitionState);
       if (block_height > electionStart && block_height < electionClose) {
         blocksToGo = electionClose - block_height;
         electionStatus = "Election Status";
@@ -282,15 +284,11 @@ client.on('interactionCreate', async interaction => {
         if (!transitionState) {
           blocksToGo = electionStart - block_height;
         } else {
-          blocksToGo = currentCouncilEnd - block_height;
-          electionClose = currentCouncilEnd;
-          electionStart = electionClose - transitionPeriod;
+          electionStart = electionClose;
+          electionClose = electionClose + transitionPeriod;
+          blocksToGo = electionClose - block_height;
         }
         electionStatus = "Election Results";
-      }
-      
-      if (blocksToGo+transitionPeriod <= transitionPeriod) {
-        transitionState = true;
       }
       
       const secondsRemaining = blocksToGo < 0 ? 0 : blocksToGo * 2 * 60;
@@ -298,28 +296,39 @@ client.on('interactionCreate', async interaction => {
       hours = Math.floor((secondsRemaining % (60 * 60 * 24)) / (60 * 60));
       minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
       seconds =Math.floor(secondsRemaining % 60);
-      
-      const candidates = await getCRCs("listcrcandidates");
-      if (candidates.totalcounts > 0) {
-        candidates.crcandidatesinfo.forEach((candidate) => {
-          // crcs = crcs + "{0:<20} {1}".format(key, value) + "\n"
-          let output = codes.filter(a => a.code == candidate.location);      
+      let candidates = "";
+    
+      if (!transitionState) {
+        candidates = await getCRCs("listcrcandidates");
+        if (candidates.totalcounts > 0) {
+          candidates.crcandidatesinfo.forEach((candidate) => {
+            let output = codes.filter(a => a.code == candidate.location);            
+            ranks += `**${candidate.index+1}.** ${candidate.nickname} (${output[0].name}) *[web](${candidate.url})* -- **${parseFloat(candidate.votes).toLocaleString("en", {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })}**` + "\n";
           
-          ranks += `**${candidate.index+1}.** ${candidate.nickname} (${output[0].name}) *[web](${candidate.url})* -- **${parseFloat(candidate.votes).toLocaleString("en", {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-          })}**` + "\n";
-        
-          totalVotes += parseFloat(candidate.votes);
-          /*if (candidate.Rank === 12) {
-            crcs = crcs + "\n";
-          }*/
-        });
+            totalVotes += parseFloat(candidate.votes);
+            /*if (candidate.Rank === 12) {
+              crcs = crcs + "\n";
+            }*/
+          });
+        } else {
+          ranks = "No candidate available yet";
+        }
       } else {
-        ranks = "No candidate available yet";
+        candidates = await getCRCs("listnextcrs");
+        if (candidates.totalcounts > 0) {
+          candidates.crmembersinfo.forEach((candidate) => {
+            let output = codes.filter(a => a.code == candidate.location);
+            ranks += `**${candidate.index+1}.** ${candidate.nickname} (${output[0].name}) *[web](${candidate.url})*\n`;
+          });
+        } else {
+          ranks = "No candidate available yet";
+        }
       }
       
-      voted += `***Total ELA voted -- ${new Intl.NumberFormat('en-US').format(totalVotes)}***`;
+      if (!transitionState) voted += `***Total ELA voted -- ${new Intl.NumberFormat('en-US').format(totalVotes)}***`;
       
       if (ranks.length > 1024) {
         ranks = ranks.substring(1, 1024);
@@ -332,7 +341,7 @@ client.on('interactionCreate', async interaction => {
     .setURL('https://www.cyberrepublic.org/council');
     if (connection_ok) {      
       embed.addFields({name: electionStatus, value: ranks});
-      embed.addFields({name: '-----------------------------------------', value: voted});
+      if (!transitionState) embed.addFields({name: '-----------------------------------------', value: voted});
       if (!transitionState) {
         if (block_height > electionStart && block_height < electionClose) {
           electionStateMsg = `CR Election in progress`;
