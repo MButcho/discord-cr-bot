@@ -1,6 +1,7 @@
 // Require the necessary discord.js classes
 const { Client, Intents, MessageEmbed, TextChannel } = require('discord.js');
 const { token, dev } = require('./config.json');
+const { crc_members, crc_sec } = require('./council.json');
 const codes = require('./codes.json');
 const request = require('request');
 const fetch = require('node-fetch');
@@ -10,12 +11,14 @@ let show_date = false;
 if (dev) {
   check_mins = 0.1;
   show_date = true;
+  show_log_msg = true;
 }
 let check_interval = check_mins * 60 * 1000;
 
 // basic variables
-const ver = "v1.5.4";
+const ver = "v1.6.0";
 const api_official = "https://api.elastos.io/ela";
+const eid_official = "https://api.elastos.io/eid";
 const api_proposals = "https://api.cyberrepublic.org/api/cvote/list_public?voteResult=all";
 let connection_ok = true;
 const err_msg = "API is currently in down, please try again later ...";
@@ -36,34 +39,6 @@ let minutes = 0;
 let seconds = 0;
 let height = 0;
 let block_height = "";
-
-// Basic variables
-const council = {
-  "60cf124660cb2c00781146e2": "Elation Studios",
-  "60c4826d77d3640078f4ddfe": "Rebecca Zhu",
-  "60cff34cc05ef80078cf60e8": "Song SJun",
-  "5ee045869e10fd007849e3d2": "The Strawberry Council",
-  "5b4e46dbccac490035e4072f": "Sash | Elacity 🐘",
-  "62a97bb904223900785a5897": "MButcho ● Nenchy",
-  "5d14716f43816e009415219b": "PG BAO",
-  "5d14716f43816e009415219b": "Sai",
-  "646f44e4b4fcd0007865382c": "ⓗwξdini • 4hm3d",
-  "": "Bocheng Zhang",
-  "": "gelaxy",
-  "": "tyrolee8848",
-  //"5b6cff7a3d173c0089ee5acf": "SUNNYFENGHAN",
-  //"60d094eec05ef80078cf689e": "Donald Bullers",
-  //"60db5e08c05ef80078cfdb85": "Mark Xing",
-  //"5b4e46dbccac490035e4072f": "Brittany Kaiser | Own Your Data",
-  //"5c2f5a15f13d65008969be61": "Zhang Feng",
-  //"5ee0d99f9e10fd007849e53e": "Orchard Trinity",
-  //"60c444e0a9daba0078a58aed": "Ryan | Starfish Labs",
-  //"5c738c9a471cb3009422b42e": "Jingyu Niu",
-  //"62b1dc7304223900785aabc2": "Elacity Official",
-  //"5b481442e3ffea0035f4e6e7": "DR",
-  //"62b1a5c804223900785aa988": "Infi",
-  //"62bc8a196705da0078a4e378": "Phantz Club",
-};
 
 const footer_text = `Support CR Bot ${ver} creator via EJfW2mCdZPVxHVEv891xDop7hJAsYbKH5R`;
 const footer_img = 'https://i.postimg.cc/660rjMR1/avatar-laser-blue.png';
@@ -304,7 +279,7 @@ client.on('interactionCreate', async interaction => {
       let candidates = "";
     
       if (!transitionState) {
-        candidates = await getCRCs("listcrcandidates");
+        candidates = await getData("listcrcandidates");
         if (candidates.totalcounts > 0) {
           candidates.crcandidatesinfo.forEach((candidate) => {
             let output = codes.filter(a => a.code == candidate.location);            
@@ -322,7 +297,7 @@ client.on('interactionCreate', async interaction => {
           ranks = "No candidate available yet";
         }
       } else {
-        candidates = await getCRCs("listnextcrs");
+        candidates = await getData("listnextcrs");
         if (candidates.totalcounts > 0) {
           candidates.crmembersinfo.forEach((candidate) => {
             let output = codes.filter(a => a.code == candidate.location);
@@ -407,7 +382,7 @@ client.on('interactionCreate', async interaction => {
       minutes = Math.floor((secsCurrentCouncil % (60 * 60)) / 60);
       seconds = Math.floor(secsCurrentCouncil % 60);
       
-      const crc = await getCRCs("listcurrentcrs");
+      const crc = await getData("listcurrentcrs");
       crc.crmembersinfo.forEach((candidate) => {
         // crcs = crcs + "{0:<20} {1}".format(key, value) + "\n"
         let output = codes.filter(a => a.code == candidate.location);      
@@ -493,7 +468,8 @@ client.on('interactionCreate', async interaction => {
           }
           if (vote.value === "abstention" && vote.status === "chained") abstention++;
           if (vote.value !== "undecided" && vote.status === "unchain") {
-            unchained.push(`${council[vote.votedBy]} voted ${vote.value} but did not chain the vote`);
+            let value = getCRC(vote.votedBy, "nickname");
+            unchained.push(`${value} voted ${vote.value} but did not chain the vote`);
           }
         });
 
@@ -507,7 +483,8 @@ client.on('interactionCreate', async interaction => {
         let undecidedList = '';
         if (undecideds.length !== 0) {
           undecideds.forEach((member) => {
-            undecidedList += `${council[member]}\n`;
+            let value = getCRC(member, "nickname");
+            undecidedList += `${value}\n`;
           });
         };
                 
@@ -536,67 +513,6 @@ client.on('interactionCreate', async interaction => {
 		interaction.editReply({ embeds: [embed] });
   }
 });
-
-// Respond to messages
-/*client.on('messageCreate', async (message) => {
-  // get date&time
-  //let command_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-    
-  // old /ping response
-  if(message.content.toLowerCase().startsWith('/ping') || message.content.toLowerCase().startsWith('!ping')) {
-    console.log((show_date ? command_date + " ":"") + `Ping command triggered`);
-    
-    // Send embeded message
-    const embed = new MessageEmbed()
-    .setColor(0x5BFFD0)
-    .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
-    .setTitle('Cyber Republic - Proposals')
-    .setURL('https://www.cyberrepublic.org/proposals')
-    .addField(`I am up and running since ${start_date} UTC`, '\u200b')
-    embed.setTimestamp();
-    embed.setFooter({text: footer_text, iconURL: footer_img});
-    
-    message.channel.send({ embeds: [embed] });
-    //client.channels.cache.get(channel_id).send({ embeds: [embed] });
-  }*/
-    
-  // council response
-  /*if(message.content.toLowerCase().includes('/council')) {
-    console.log((show_date ? command_date + " ":"") + `Council command triggered`);
-
-    const headers = {
-      "content-type": "application/json;",
-    };
-    const dataString = '{"method": "listcurrentcrs","params":{"state":"all"}}';
-    const options = {
-      url: "http://localhost:20336/",
-      method: "POST",
-      headers: headers,
-      body: dataString,
-      auth: {
-        user: "9b9182c7fb49418fa36f0c8100a555e0",
-        pass: "5e946b99ac9f64b09328ceeb715d732a",
-      },
-    };
-
-    function callback(error, response, body) {
-      if (!error && response.statusCode == 200) {
-        let list = JSON.parse(body);
-        list = list.error.message.crmembersinfo;
-
-        let council = "<b>Cyber Republic Council Incumbents</b>" + "\n" + "\n";
-        list.forEach((member) => {
-          council = council + `${member.nickname}  --  ${member.state}` + "\n";
-        });
-        council =
-          council +
-          `\nDisplays the active council. Will update once the election closes. Use /election for current status.`;
-        bot.sendMessage(chatId, council, { parse_mode: "HTML" });
-      }
-    }
-    request(options, callback);
-  }
-});*/
 
 // Automated check
 let storedAlerts = {};
@@ -640,7 +556,8 @@ client.on('ready', () => {
               }
               if (vote.value === "abstention" && vote.status === "chained") abstention++;
               if (vote.value !== "undecided" && vote.status === "unchain") {
-                unchained.push(`${council[vote.votedBy]} voted ${vote.value} but did not chain the vote`);
+                let value = getCRC(vote.votedBy, "nickname");
+                unchained.push(`${value} voted ${vote.value} but did not chain the vote`);
               }
             });
             
@@ -656,8 +573,9 @@ client.on('ready', () => {
             let failedList = '';
             if (undecideds.length !== 0) {
               undecideds.forEach((member) => {
-                undecidedList += `${council[member]}\n`;
-                failedList += `${council[member]} ☹\n`;
+                let value = getCRC(member, "nickname");
+                undecidedList += `${value}\n`;          
+                failedList += `${value}\n`;          
               });
             };
 
@@ -796,26 +714,24 @@ async function blockHeight() {
   .then(res => res.json())
   .then(json => height = json.result)
   .catch (err => console.log("Error in getcurrentheight"));
+  //height = 1420585;
   return height;
 }
 
-/*async function blockHeightFO() {
-  try {
-    const response = await fetchWithTimeout(api_height_2, {
-      timeout: 6000
-    });
-    const height = await response.json();
-    return height.Result;
-  } catch (error) {
-    connection_ok = false;
-    //console.log(`Error: ${error.name}`);
+async function getData(type) {
+  let crc_params = "";
+  if (type == "listcrproposalbasestate") {
+    crc_params = {
+      method: type,
+      params: {
+        "state": "registered"
+      }
+    };
+  } else {
+    crc_params = {
+      method: type      
+    };
   }
-}*/
-
-async function getCRCs(type) {
-  let crc_params = {
-    method: type      
-  };
   
   const crc_request = await fetchWithTimeout(api_official, {
     timeout: 6000,
@@ -829,4 +745,53 @@ async function getCRCs(type) {
   .then(json => crc = json.result)
   .catch (err => console.log(`Error in ${type}`));
   return crc;
+}
+
+async function getDID(_did) {
+  let api_params = {
+    id: null,
+    method: "did_resolveDID",
+    params: [{
+      did: `did:elastos:${_did}`,
+    }]
+  }
+  
+  const request = await fetchWithTimeout(eid_official, {
+    timeout: 6000,
+    method: 'POST',
+    body: JSON.stringify(api_params),
+    headers: {
+        'Content-Type': 'application/json'
+    }
+  })
+  .then(res => res.json())
+  .then(json => crc = json.result)
+  .catch (err => console.log(`Error in ${type}`));  
+  return crc;
+}
+
+async function getName(_did) {
+  let response = await getDID(_did);
+  let name = '';
+  try {
+    let buff = new Buffer.from(response.transaction[0].operation.payload, 'base64');
+    let payload = buff.toString();
+    let payload_arr = JSON.parse(payload);
+    
+    let field = payload_arr.verifiableCredential.length - 1;
+    name = payload_arr.verifiableCredential[field].credentialSubject.name;
+  } catch {
+    name = _did;
+  }
+  
+  return name;
+}
+
+function getCRC(_id, _field) {
+  let arr_found = crc_members.find(crc_member => crc_member.cr_id === _id);
+  let value = 'Unknown';
+  if (arr_found) {            
+    value = arr_found[_field];
+  }
+  return value;
 }
