@@ -16,7 +16,7 @@ if (dev) {
 let check_interval = check_mins * 60 * 1000;
 
 // basic variables
-const ver = "v1.6.1";
+const ver = "v1.6.2";
 const api_official = "https://api.elastos.io/ela";
 //const api_official = " https://api.elasafe.com/ela";
 const eid_official = "https://api.elastos.io/eid";
@@ -283,8 +283,12 @@ client.on('interactionCreate', async interaction => {
         candidates = await getData("listcrcandidates");
         if (candidates.totalcounts > 0) {
           candidates.crcandidatesinfo.forEach((candidate) => {
-            let output = codes.filter(a => a.code == candidate.location);            
-            ranks += `**${candidate.index+1}.** ${candidate.nickname} (${output[0].name}) *[web](${candidate.url})* -- **${parseFloat(candidate.votes).toLocaleString("en", {
+            let output = codes.filter(a => a.code == candidate.location);
+            let location_name = "-";
+            if (output.length > 0) {
+              location_name = output[0].name;
+            }
+            ranks += `**${candidate.index+1}.** ${candidate.nickname} (${location_name}) *[web](${candidate.url})* -- **${parseFloat(candidate.votes).toLocaleString("en", {
               minimumFractionDigits: 0,
               maximumFractionDigits: 0,
             })}**` + "\n";
@@ -302,7 +306,11 @@ client.on('interactionCreate', async interaction => {
         if (candidates.totalcounts > 0) {
           candidates.crmembersinfo.forEach((candidate) => {
             let output = codes.filter(a => a.code == candidate.location);
-            ranks += `**${candidate.index+1}.** ${candidate.nickname} (${output[0].name}) *[web](${candidate.url})*\n`;
+            let location_name = "-";
+            if (output.length > 0) {
+              location_name = output[0].name;
+            }
+            ranks += `**${candidate.index+1}.** ${candidate.nickname} (${location_name}) *[web](${candidate.url})*\n`;
           });
         } else {
           ranks = "No candidate available yet";
@@ -387,8 +395,11 @@ client.on('interactionCreate', async interaction => {
       crc.crmembersinfo.forEach((candidate) => {
         // crcs = crcs + "{0:<20} {1}".format(key, value) + "\n"
         let output = codes.filter(a => a.code == candidate.location);      
-        
-        crcs += `**${candidate.index+1}.** ${candidate.nickname} (${output[0].name}) *[web](${candidate.url})*\n`;
+        let location_name = "-";
+        if (output.length > 0) {
+          location_name = output[0].name;
+        }
+        crcs += `**${candidate.index+1}.** ${candidate.nickname} (${location_name}) *[web](${candidate.url})*\n`;
       });
       
     }
