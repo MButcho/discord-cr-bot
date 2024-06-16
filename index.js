@@ -16,7 +16,7 @@ if (dev) {
 let check_interval = check_mins * 60 * 1000;
 
 // basic variables
-const ver = "v1.6.2";
+const ver = "v1.6.3";
 const api_official = "https://api.elastos.io/ela";
 //const api_official = " https://api.elasafe.com/ela";
 const eid_official = "https://api.elastos.io/eid";
@@ -472,16 +472,16 @@ client.on('interactionCreate', async interaction => {
         let unchained = [];
 
         item.voteResult.forEach((vote) => {
-          if (vote.value === "support" && vote.status === "chained") support++;
-          if (vote.value === "reject" && vote.status === "chained") reject++;
+          if (vote.value === "support") support++;
+          if (vote.value === "reject") reject++;
+          if (vote.value === "abstention") abstention++;
           if (vote.value === "undecided") {
             undecided++;
             undecideds.push(vote.votedBy);
           }
-          if (vote.value === "abstention" && vote.status === "chained") abstention++;
           if (vote.value !== "undecided" && vote.status === "unchain") {
             let value = getCRC(vote.votedBy, "nickname");
-            unchained.push(`${value} voted ${vote.value} but did not chain the vote`);
+            unchained.push(`**${value}** (${vote.value})`);
           }
         });
 
@@ -503,15 +503,18 @@ client.on('interactionCreate', async interaction => {
         //proposals += `<b><u>Council Votes</u></b>\n&#9989;  Support - <b>${support}</b>\n&#10060;  Reject - <b>${reject}</b>\n&#128280;  Abstain - <b>${abstention}</b>\n&#9888;  Undecided - <b>${undecided}</b>\n\n`;
         let voting_status = `✅  Support - **${support}**\n❌  Reject - **${reject}**\n🔘  Abstain - **${abstention}**\n⚠  Undecided - **${undecided}**\n\u200b`;
         
-        if (unchained.length = 0) voting_status += '\u200b';
+        if (unchained.length == 0) voting_status += '\u200b';
         //proposals += `<i><a href='https://www.cyberrepublic.org/proposals/${item._id}'>View on Cyber Republic website</a></i>`;
         embed.addFields({name: '__Council Votes__', value: voting_status});        
         if (undecidedList.length > 0) {
           embed.addFields({name: '⚠ __Not Voted Yet__', value: undecidedList+'\u200b'});
         } else {
-          embed.addFields({name: '✅ __Voting__', value: all_voted});
+          if (unchained.length > 0) {
+            embed.addFields({name: '⚠ __Not Chained__ ⚠', value: unchainedList+'\u200b'});
+          } else {
+            embed.addFields({name: '✅ __Voting__', value: all_voted});
+          }
         }
-        if (unchained.length > 0) embed.addFields({name: '⚠ __Not Chained__ ⚠', value: unchainedList+'\u200b'});
       });
     } else {
       embed.addFields({name: "There are currently no proposals in the council voting period", value: "\u200b"});
@@ -560,16 +563,16 @@ client.on('ready', () => {
             let unchained = [];
 
             item.voteResult.forEach((vote) => {
-              if (vote.value === "support" && vote.status === "chained") support++;
-              if (vote.value === "reject" && vote.status === "chained") reject++;
+              if (vote.value === "support") support++;
+              if (vote.value === "reject") reject++;
+              if (vote.value === "abstention") abstention++;
               if (vote.value === "undecided") {
                 undecided++;
                 undecideds.push(vote.votedBy);
               }
-              if (vote.value === "abstention" && vote.status === "chained") abstention++;
               if (vote.value !== "undecided" && vote.status === "unchain") {
                 let value = getCRC(vote.votedBy, "nickname");
-                unchained.push(`${value} voted ${vote.value} but did not chain the vote`);
+                unchained.push(`**${value}** (${vote.value})`);
               }
             });
             
