@@ -47,7 +47,9 @@ node deploy-commands.js
 ```bash
 node index.js
 ```
-### Thank you and enjoy!
+# Donations
 
-Any donation to ELA address EUSMsck3svNiacva9LfwrLfbvNnUU27z77 or mbutcho (CryptoName) is much appreciated.
+Any donation to BTC LN address **tipme@walletofsatoshi.com** will be appreciated.
+
+### Thank you and enjoy!
 
