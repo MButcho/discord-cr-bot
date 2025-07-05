@@ -3,8 +3,9 @@
     "@discordjs/builders": "^0.11.0",
     "@discordjs/rest": "^0.2.0-canary.0",
     "discord-api-types": "^0.26.0",
-    "discord.js": "^13.10.2",
+    "discord.js": "^15.0.0-dev.1751674420-42fbca83c",
     "node-fetch": "^2.6.7",
+    "punycode": "^2.3.1",
     "request": "^2.88.2"
   }
 }

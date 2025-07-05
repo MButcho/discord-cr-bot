@@ -1,5 +1,5 @@
 // Require the necessary discord.js classes
-const { Client, Intents, MessageEmbed, TextChannel } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder, TextChannel, Events } = require('discord.js');
 const { token, dev } = require('./config.json');
 const { crc_members, crc_sec } = require('./council.json');
 const codes = require('./codes.json');
@@ -16,7 +16,7 @@ if (dev) {
 let check_interval = check_mins * 60 * 1000;
 
 // basic variables
-const ver = "v1.6.3";
+const ver = "v1.6.4";
 const api_official = "https://api.elastos.io/ela";
 //const api_official = " https://api.elasafe.com/ela";
 const eid_official = "https://api.elastos.io/eid";
@@ -29,7 +29,7 @@ let start_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
 let start_date_raw = new Date();
 
 // Create a new client instance
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]});
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]});
 let channel_id = '917029748192985139'; // Elastos Discord #🌎┃cyber-republic-dao
 if (dev) channel_id = '925767750767497216'; // MB Test server #test
 let all_voted = '😎 Everyone voted! Well done!\n\u200b';
@@ -45,7 +45,7 @@ const footer_text = `Support CR Bot ${ver} creator via EJfW2mCdZPVxHVEv891xDop7h
 const footer_img = 'https://i.postimg.cc/660rjMR1/avatar-laser-blue.png';
 
 // When the client is ready
-client.once('ready', () => {
+client.once(Events.ClientReady, (client) => {
   console.log((show_date ? start_date + " ":"") + `Logged in as ${client.user.tag} on ${ver}`);
 });
 
@@ -79,7 +79,7 @@ client.on('interactionCreate', async interaction => {
     if (next_loop_secs.length === 1) next_loop_secs = "0"+next_loop_secs;
     
     // Send embeded message
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
     .setColor(0x5BFFD0)
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Cyber Republic - Proposals')
@@ -111,7 +111,7 @@ client.on('interactionCreate', async interaction => {
     }
 
     // Send embeded message
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
     .setColor(0x5BFFD0)
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Cyber Republic - Refactoring')
@@ -205,7 +205,7 @@ client.on('interactionCreate', async interaction => {
     bpos_count = bpos_count_80 + bpos_count_40 + bpos_count_20 + bpos_count_0
     
     // Send embeded message
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
     .setColor(0x5BFFD0)
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Bonded Proof of Stake')
@@ -323,7 +323,7 @@ client.on('interactionCreate', async interaction => {
         ranks = ranks.substring(1, 1024);
       }
     }
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
     .setColor(0x5BFFD0)
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Cyber Republic Council')
@@ -403,7 +403,7 @@ client.on('interactionCreate', async interaction => {
       });
       
     }
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
     .setColor(0x5BFFD0)
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Cyber Republic Council')
@@ -435,7 +435,7 @@ client.on('interactionCreate', async interaction => {
       //return item.proposedEndsHeight < height && item.status === "ACTIVE"; // test
     });
     
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
     .setColor(0x5BFFD0)
     .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
     .setTitle('Cyber Republic - Proposals')
@@ -638,7 +638,7 @@ client.on('ready', () => {
             }
 
             // Send embeded message
-            const embed = new MessageEmbed()
+            const embed = new EmbedBuilder()
             .setColor(0x5BFFD0)
             .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
             .setTitle(item.title)
@@ -673,7 +673,7 @@ client.on('ready', () => {
           });
         } else {
           // Send embeded message
-          const embed = new MessageEmbed()
+          const embed = new EmbedBuilder()
           .setColor(0x5BFFD0)
           .setAuthor({ name: 'Cyber Republic DAO', iconURL: 'https://i.postimg.cc/13q2rng1/cr1.png', url: 'https://cyberrepublic.org' })
           .setTitle('Cyber Republic - Proposals')

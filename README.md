@@ -49,7 +49,7 @@ node index.js
 ```
 # Donations
 
-Any donation to BTC LN address **tipme@walletofsatoshi.com** will be appreciated.
+Any donation to BTC LN address **tipme@walletofsatoshi.com** will be appreciated!
 
 ### Thank you and enjoy!
 
