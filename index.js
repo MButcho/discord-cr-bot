@@ -1,6 +1,6 @@
 // Require the necessary discord.js classes
 const { Client, GatewayIntentBits, EmbedBuilder, TextChannel, Events } = require('discord.js');
-const { token, dev } = require('./config.json');
+const { token, dev, ignore_nodes } = require('./config.json');
 const { crc_members, crc_sec } = require('./council.json');
 const codes = require('./codes.json');
 const request = require('request');
@@ -184,22 +184,23 @@ client.on('interactionCreate', async interaction => {
       let state = producer.state;
       let nickname = producer.nickname;
       
-      if (state == "Active") {
-        if (parseInt(dposv2votes) > reqVotes) {
-          bpos_count_80 = bpos_count_80 + 1;
-        } else if (parseInt(dposv2votes) > reqVotes/2) {
-          bpos_count_40 = bpos_count_40 + 1;
-        }  else if (parseInt(dposv2votes) > reqVotes/4) {
-          bpos_count_20 = bpos_count_20 + 1;
-        } else {
-          bpos_count_0 = bpos_count_0 + 1;
+      if (!ignore_nodes.includes(nickname)) {
+        if (state == "Active") {
+          if (parseInt(dposv2votes) > reqVotes) {
+            bpos_count_80 = bpos_count_80 + 1;
+          } else if (parseInt(dposv2votes) > reqVotes/2) {
+            bpos_count_40 = bpos_count_40 + 1;
+          }  else if (parseInt(dposv2votes) > reqVotes/4) {
+            bpos_count_20 = bpos_count_20 + 1;
+          } else {
+            bpos_count_0 = bpos_count_0 + 1;
+          }
+        
+        } else if (state == "Inactive") {
+          bpos_count_inactive = bpos_count_inactive + 1;
+          bpos_inactive += nickname + "\n"
         }
-      
-      } else if (state == "Inactive") {
-        bpos_count_inactive = bpos_count_inactive + 1;
-        bpos_inactive += nickname + "\n"
       }
-      
     });
     
     bpos_count = bpos_count_80 + bpos_count_40 + bpos_count_20 + bpos_count_0
